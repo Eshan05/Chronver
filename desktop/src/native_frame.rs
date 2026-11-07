@@ -5,21 +5,36 @@ mod windows {
     use windows_sys::Win32::{
         Foundation::{HWND, LPARAM, LRESULT, POINT, RECT, WPARAM},
         Graphics::Gdi::{BLACK_BRUSH, FillRect, GetDC, GetStockObject, ReleaseDC, ScreenToClient},
+        System::LibraryLoader::GetModuleHandleW,
         UI::{
             HiDpi::{GetDpiForWindow, GetSystemMetricsForDpi},
             Shell::{DefSubclassProc, RemoveWindowSubclass, SetWindowSubclass},
             WindowsAndMessaging::{
-                GWL_STYLE, GetClientRect, GetWindowLongPtrW, HTBOTTOM, HTBOTTOMLEFT, HTBOTTOMRIGHT,
-                HTCLIENT, HTLEFT, HTRIGHT, HTTOP, HTTOPLEFT, HTTOPRIGHT, IsZoomed,
-                NCCALCSIZE_PARAMS, SM_CXPADDEDBORDER, SM_CXSIZEFRAME, SM_CYSIZEFRAME,
-                SWP_FRAMECHANGED, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER,
-                SetWindowPos, WM_ERASEBKGND, WM_NCCALCSIZE, WM_NCDESTROY, WM_NCHITTEST, WM_SIZE,
-                WS_CAPTION, WS_THICKFRAME,
+                DestroyIcon, GWL_STYLE, GetClientRect, GetWindowLongPtrW, HICON, HTBOTTOM,
+                HTBOTTOMLEFT, HTBOTTOMRIGHT, HTCLIENT, HTLEFT, HTRIGHT, HTTOP, HTTOPLEFT,
+                HTTOPRIGHT, ICON_BIG, ICON_SMALL, IMAGE_ICON, IsZoomed, LoadImageW,
+                NCCALCSIZE_PARAMS, SM_CXICON, SM_CXPADDEDBORDER, SM_CXSIZEFRAME, SM_CXSMICON,
+                SM_CYICON, SM_CYSIZEFRAME, SM_CYSMICON, SWP_FRAMECHANGED, SWP_NOACTIVATE,
+                SWP_NOMOVE, SWP_NOSIZE, SWP_NOZORDER, SendMessageW, SetWindowPos, WM_ERASEBKGND,
+                WM_NCCALCSIZE, WM_NCDESTROY, WM_NCHITTEST, WM_SETICON, WM_SIZE, WS_CAPTION,
+                WS_THICKFRAME,
             },
         },
     };
 
     const SUBCLASS: usize = 0x5253_4652;
+
+    struct WindowIcons([HICON; 2]);
+
+    impl Drop for WindowIcons {
+        fn drop(&mut self) {
+            for icon in self.0 {
+                if !icon.is_null() {
+                    unsafe { DestroyIcon(icon) };
+                }
+            }
+        }
+    }
 
     pub fn install(window: &rune::WindowHandle) -> Result<(), String> {
         window.with_raw_handle(|raw| {
@@ -29,7 +44,9 @@ mod windows {
             let hwnd = raw.hwnd.get() as HWND;
             // This callback runs on the owning UI thread. No native pointer is retained.
             unsafe {
-                if SetWindowSubclass(hwnd, Some(frame), SUBCLASS, 0) == 0 {
+                let icons = Box::into_raw(Box::new(load_icons(hwnd)));
+                if SetWindowSubclass(hwnd, Some(frame), SUBCLASS, icons as usize) == 0 {
+                    drop(Box::from_raw(icons));
                     return Err("Could not install the native title-bar correction".into());
                 }
                 if SetWindowPos(
@@ -49,9 +66,37 @@ mod windows {
                         "Could not initialize the transparent Windows backing bitmap".into(),
                     );
                 }
+                for (kind, icon) in [ICON_SMALL, ICON_BIG].into_iter().zip((*icons).0) {
+                    if !icon.is_null() {
+                        SendMessageW(hwnd, WM_SETICON, kind as _, icon as _);
+                    }
+                }
             }
             Ok(())
         })?
+    }
+
+    unsafe fn load_icons(hwnd: HWND) -> WindowIcons {
+        unsafe {
+            let module = GetModuleHandleW(std::ptr::null());
+            if module.is_null() {
+                return WindowIcons([std::ptr::null_mut(); 2]);
+            }
+            let dpi = GetDpiForWindow(hwnd);
+            WindowIcons([(SM_CXSMICON, SM_CYSMICON), (SM_CXICON, SM_CYICON)].map(
+                |(width, height)| {
+                    // Each window owns its two DPI-sized handles until WM_NCDESTROY.
+                    LoadImageW(
+                        module,
+                        1usize as *const u16,
+                        IMAGE_ICON,
+                        GetSystemMetricsForDpi(width, dpi),
+                        GetSystemMetricsForDpi(height, dpi),
+                        0,
+                    ) as HICON
+                },
+            ))
+        }
     }
 
     unsafe extern "system" fn frame(
@@ -60,7 +105,7 @@ mod windows {
         wparam: WPARAM,
         lparam: LPARAM,
         _: usize,
-        _: usize,
+        icons: usize,
     ) -> LRESULT {
         // Rune keeps its caption buttons and maximized/fullscreen geometry. Restored
         // resize margins are painted by us so Acrylic cannot turn them into a grey rim.
@@ -132,6 +177,9 @@ mod windows {
             }
             if message == WM_NCDESTROY {
                 RemoveWindowSubclass(hwnd, Some(frame), SUBCLASS);
+                let result = DefSubclassProc(hwnd, message, wparam, lparam);
+                drop(Box::from_raw(icons as *mut WindowIcons));
+                return result;
             }
             DefSubclassProc(hwnd, message, wparam, lparam)
         }

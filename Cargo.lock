@@ -3312,10 +3312,12 @@ name = "releasescout-rune"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "find-msvc-tools",
  "pulldown-cmark",
  "raw-window-handle",
  "releasescout-engine",
  "reqwest",
+ "resvg",
  "rune",
  "rune-kit",
  "serde",
