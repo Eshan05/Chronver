@@ -79,6 +79,15 @@ impl State {
         self.inventory.loading = true;
         self.inventory.error = None;
         let manager = Manager::ALL[self.inventory.manager];
+        let previous = (!updates)
+            .then(|| {
+                self.inventory
+                    .scans
+                    .iter()
+                    .find(|scan| scan.manager == manager)
+                    .cloned()
+            })
+            .flatten();
         self.inventory
             .work
             .request((manager, updates), move |(manager, updates)| {
@@ -95,7 +104,11 @@ impl State {
                 (if updates {
                     releasescout_engine::inventory_refresh::check(manager, &runner)
                 } else {
-                    releasescout_engine::inventory::scan(manager, false, &runner)
+                    releasescout_engine::inventory_refresh::startup(
+                        manager,
+                        previous.as_ref(),
+                        &runner,
+                    )
                 })
                 .map_err(|e| e.to_string())
             });
@@ -107,7 +120,7 @@ impl State {
         self.inventory.loading = false;
         match result {
             Ok(scan) => {
-                if scan.update_check_requested {
+                if scan.update_check_requested && !scan.candidate_results_reused {
                     self.inventory.candidate_errors.remove(scan.manager.id());
                 }
                 self.inventory.error = None;

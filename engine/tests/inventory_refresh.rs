@@ -70,30 +70,43 @@ fn startup_snapshot_freshness_is_provider_scoped_and_does_not_extend_timestamps(
 }
 
 #[test]
-fn recent_candidates_are_reused_only_after_installed_identity_validation() {
+fn candidates_are_carried_only_for_unchanged_installed_records() {
     let old = previous();
     let runner = Fake::new(vec![choco("1.0.0", "")]);
     let scan = inventory_refresh::startup(Manager::Chocolatey, Some(&old), &runner).unwrap();
     assert_eq!(scan.packages[0].available.as_deref(), Some("2.0.0"));
     assert_eq!(scan.candidate_time(), old.candidate_time());
     assert_ne!(scan.checked_at, scan.candidate_time());
+    assert!(scan.candidate_results_reused);
     assert!(scan.update_check_succeeded);
     assert_eq!(scan.packages[0].candidate_check_succeeded, Some(true));
     assert_eq!(runner.scripts.borrow().len(), 1);
     assert!(!runner.scripts.borrow()[0].contains("outdated"));
-    let runner = Fake::new(vec![
-        choco("1.1.0", ""),
-        choco("1.1.0", "fixture|1.1.0|2.0.0|false"),
-    ]);
+    let runner = Fake::new(vec![choco("1.1.0", "")]);
     let scan = inventory_refresh::startup(Manager::Chocolatey, Some(&old), &runner).unwrap();
-    assert_eq!(runner.scripts.borrow().len(), 2);
-    assert!(runner.scripts.borrow()[1].contains("outdated"));
+    assert_eq!(runner.scripts.borrow().len(), 1);
+    assert!(!runner.scripts.borrow()[0].contains("outdated"));
     assert_eq!(scan.packages[0].installed.as_deref(), Some("1.1.0"));
     assert_ne!(scan.candidate_time(), old.candidate_time());
+    assert!(!scan.candidate_requested(&scan.packages[0]));
+    assert!(scan.packages[0].available.is_none());
+
+    let runner = Fake::new(vec![
+        serde_json::json!({
+            "installed": "fixture|1.0.0\nnew-package|1.0.0",
+        })
+        .to_string(),
+    ]);
+    let scan = inventory_refresh::startup(Manager::Chocolatey, Some(&old), &runner).unwrap();
+    let find = |id| scan.packages.iter().find(|p| p.id == id).unwrap();
+    assert!(scan.candidate_requested(find("fixture")));
+    assert!(!scan.candidate_requested(find("new-package")));
+    assert!(!scan.update_check_succeeded);
+    assert_eq!(find("fixture").available.as_deref(), Some("2.0.0"));
 }
 
 #[test]
-fn expired_failed_future_or_wrong_provider_checks_cannot_suppress_refresh() {
+fn startup_preserves_the_original_candidate_time_but_never_checks_remote_updates() {
     for kind in 0..4 {
         let mut old = previous();
         match kind {
@@ -101,17 +114,26 @@ fn expired_failed_future_or_wrong_provider_checks_cannot_suppress_refresh() {
                 old.candidate_checked_at =
                     Some((chrono::Utc::now() - chrono::Duration::hours(1)).to_rfc3339())
             }
-            1 => old.update_check_succeeded = false,
+            1 => {
+                old.update_check_succeeded = false;
+                old.packages[0].candidate_check_succeeded = Some(false);
+            }
             2 => {
                 old.candidate_checked_at =
                     Some((chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339())
             }
             _ => old.manager = Manager::Npm,
         }
-        let runner = Fake::new(vec![choco("1.0.0", "fixture|1.0.0|2.0.0|false")]);
-        inventory_refresh::startup(Manager::Chocolatey, Some(&old), &runner).unwrap();
+        let runner = Fake::new(vec![choco("1.0.0", "")]);
+        let scan = inventory_refresh::startup(Manager::Chocolatey, Some(&old), &runner).unwrap();
         assert_eq!(runner.scripts.borrow().len(), 1);
-        assert!(runner.scripts.borrow()[0].contains("outdated"));
+        assert!(!runner.scripts.borrow()[0].contains("outdated"));
+        if kind == 0 {
+            assert_eq!(scan.candidate_time(), old.candidate_time());
+            assert_eq!(scan.packages[0].available.as_deref(), Some("2.0.0"));
+        } else {
+            assert!(!scan.candidate_requested(&scan.packages[0]));
+        }
     }
 }
 
@@ -120,7 +142,7 @@ fn scoop_refresh_precedes_local_status_and_failures_remain_visible() {
     for fresh in [false, true] {
         let runner = Fake::new(vec![serde_json::json!({"fresh":fresh,"action":if fresh {"recent"} else {"failed"},"warnings":if fresh {vec![]} else {vec!["bucket refresh failed"]}}).to_string(),
             serde_json::json!({"installed":{"apps":[{"Name":"fixture","Version":"1.0.0","Source":"main"}]},"updates":[{"Name":"fixture","Installed Version":"1.0.0","Latest Version":"2.0.0"}]}).to_string()]);
-        let scan = inventory_refresh::startup(Manager::Scoop, None, &runner).unwrap();
+        let scan = inventory_refresh::check(Manager::Scoop, &runner).unwrap();
         assert_eq!(
             runner.scripts.borrow()[0],
             inventory_refresh::scoop_refresh_script()
@@ -137,6 +159,20 @@ fn scoop_refresh_precedes_local_status_and_failures_remain_visible() {
             assert!(scan.warnings.iter().any(|w| w == "bucket refresh failed"));
         }
     }
+}
+
+#[test]
+fn startup_scoop_reads_installed_apps_without_refreshing_buckets() {
+    let runner = Fake::new(vec![
+        serde_json::json!({
+            "installed": { "apps": [{"Name":"fixture","Version":"1.0.0","Source":"main"}] }
+        })
+        .to_string(),
+    ]);
+    let scan = inventory_refresh::startup(Manager::Scoop, None, &runner).unwrap();
+    assert!(!scan.update_check_requested);
+    assert_eq!(runner.scripts.borrow().len(), 1);
+    assert!(!runner.scripts.borrow()[0].contains("scoop status"));
 }
 
 #[test]

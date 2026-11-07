@@ -807,6 +807,7 @@ mod tests {
                 manager,
                 checked_at: (now - chrono::Duration::hours(23)).to_rfc3339(),
                 candidate_checked_at: None,
+                candidate_results_reused: false,
                 update_check_requested: releasescout_engine::inventory_refresh::supports_candidates(
                     manager,
                 ),

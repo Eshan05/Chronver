@@ -98,6 +98,7 @@ fn candidates_supported(manager: Option<Manager>) -> bool {
 
 impl Observation {
     pub fn new(p: &InstalledPackage, scan: &Scan) -> Self {
+        let requested = scan.candidate_requested(p);
         Self {
             check_key: check_key(p),
             id: p.id.clone(),
@@ -105,11 +106,11 @@ impl Observation {
             scope: p.scope.clone(),
             root: p.root.clone(),
             checked_at: scan.checked_at.clone(),
-            requested: scan.update_check_requested,
+            requested,
             succeeded: p
                 .candidate_check_succeeded
                 .unwrap_or(scan.update_check_succeeded),
-            confirmed_update: scan.update_check_requested
+            confirmed_update: requested
                 && p.candidate_check_succeeded
                     .unwrap_or(scan.update_check_succeeded)
                 && candidates_supported(Some(p.manager))

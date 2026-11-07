@@ -73,6 +73,7 @@ pub fn notice_messages(s: &State) -> Vec<String> {
             .iter()
             .filter(|scan| {
                 scan.update_check_requested
+                    && !scan.candidate_results_reused
                     && releasescout_engine::inventory_refresh::supports_candidates(scan.manager)
                     && !scan.update_check_succeeded
                     && !inventory.candidate_errors.contains_key(scan.manager.id())
@@ -181,6 +182,7 @@ fn open_inventory(s: &mut State) {
     s.chrome.status_hover = false;
     if let Some(scan) = s.inventory.scans.iter().find(|scan| {
         scan.update_check_requested
+            && !scan.candidate_results_reused
             && !scan.update_check_succeeded
             && releasescout_engine::inventory_refresh::supports_candidates(scan.manager)
     }) {
@@ -657,6 +659,7 @@ mod tests {
             manager,
             checked_at,
             candidate_checked_at: None,
+            candidate_results_reused: false,
             update_check_requested: true,
             update_check_succeeded: complete,
             packages: vec![],

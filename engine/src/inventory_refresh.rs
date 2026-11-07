@@ -1,12 +1,11 @@
-//! Startup candidate checks and source metadata refreshes, never package upgrades.
+//! Installed snapshots and explicit candidate checks, never package upgrades.
 use crate::{
     Result,
-    inventory::{self, Manager, Runner, Scan},
+    inventory::{self, InstalledPackage, Manager, Runner, Scan},
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-const CANDIDATE_TTL: i64 = 30 * 60;
 pub const AUTOMATIC_SCAN_INTERVAL: chrono::Duration = chrono::Duration::hours(24);
 static SCOOP_REFRESH: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
@@ -32,25 +31,17 @@ pub fn recent_scan_attempt(at: DateTime<Utc>, now: DateTime<Utc>) -> bool {
     (chrono::Duration::zero()..AUTOMATIC_SCAN_INTERVAL).contains(&(now - at))
 }
 
-fn recent(scan: &Scan) -> bool {
-    scan.update_check_requested
-        && scan.update_check_succeeded
-        && DateTime::parse_from_rfc3339(scan.candidate_time()).is_ok_and(|time| {
-            (0..CANDIDATE_TTL).contains(&(Utc::now().timestamp() - time.timestamp()))
-        })
-}
-
-fn signature(scan: &Scan) -> Vec<String> {
-    let mut entries: Vec<_> = scan
-        .packages
-        .iter()
-        .map(|p| {
-            serde_json::to_string(&(&p.id, &p.installed, &p.source, &p.scope, &p.root, p.pinned))
-                .expect("serializable inventory identity")
-        })
-        .collect();
-    entries.sort();
-    entries
+fn installed_identity(
+    p: &InstalledPackage,
+) -> (&str, &str, &str, Option<&str>, Option<&str>, bool) {
+    (
+        &p.id,
+        &p.source,
+        &p.scope,
+        p.root.as_deref(),
+        p.installed.as_deref(),
+        p.pinned,
+    )
 }
 
 #[derive(Deserialize)]
@@ -109,42 +100,48 @@ pub fn check(manager: Manager, runner: &impl Runner) -> Result<Scan> {
 }
 
 pub fn startup(manager: Manager, previous: Option<&Scan>, runner: &impl Runner) -> Result<Scan> {
-    if !supports_candidates(manager) {
-        return inventory::scan(manager, false, runner);
+    let mut installed = inventory::scan(manager, false, runner)?;
+    let Some(old) = previous.filter(|old| {
+        supports_candidates(manager)
+            && old.manager == manager
+            && old.update_check_requested
+            && DateTime::parse_from_rfc3339(old.candidate_time())
+                .is_ok_and(|time| time <= Utc::now())
+    }) else {
+        return Ok(installed);
+    };
+
+    let mut candidates = std::collections::HashMap::new();
+    for record in &old.packages {
+        // Duplicate identities cannot establish which old result belongs here.
+        candidates
+            .entry(installed_identity(record))
+            .and_modify(|known| *known = None)
+            .or_insert(Some(record));
     }
-    // Scoop status is local and cheap; always recompute after checking bucket freshness.
-    if manager != Manager::Scoop
-        && let Some(old) = previous.filter(|s| s.manager == manager && recent(s))
-    {
-        let mut installed = inventory::scan(manager, false, runner)?;
-        if signature(&installed) == signature(old) {
-            for record in &mut installed.packages {
-                if let Some(cached) = old.packages.iter().find(|p| {
-                    p.id == record.id
-                        && p.source == record.source
-                        && p.scope == record.scope
-                        && p.root == record.root
-                        && p.installed == record.installed
-                }) {
-                    record.available = cached.available.clone();
-                    record.candidate_check_succeeded = Some(
-                        cached
-                            .candidate_check_succeeded
-                            .unwrap_or(old.update_check_succeeded),
-                    );
-                    record.candidate_note = cached.candidate_note.clone();
-                }
-            }
-            installed.update_check_requested = true;
-            installed.update_check_succeeded = true;
-            installed.candidate_checked_at = Some(old.candidate_time().into());
-            for warning in &old.warnings {
-                if !installed.warnings.contains(warning) {
-                    installed.warnings.push(warning.clone());
-                }
-            }
-            return Ok(installed);
-        }
+    let matches: Vec<_> = installed
+        .packages
+        .iter()
+        .map(|record| candidates.remove(&installed_identity(record)).flatten())
+        .collect();
+    let mut carried = 0;
+    for (record, previous) in installed.packages.iter_mut().zip(matches) {
+        let Some(previous) = previous.filter(|p| {
+            p.candidate_check_succeeded
+                .unwrap_or(old.update_check_succeeded)
+        }) else {
+            continue;
+        };
+        record.available = previous.available.clone();
+        record.candidate_check_succeeded = Some(true);
+        record.candidate_note = previous.candidate_note.clone();
+        carried += 1;
     }
-    check(manager, runner)
+    if carried > 0 {
+        installed.update_check_requested = true;
+        installed.update_check_succeeded = carried == installed.packages.len();
+        installed.candidate_checked_at = Some(old.candidate_time().into());
+        installed.candidate_results_reused = true;
+    }
+    Ok(installed)
 }

@@ -10,19 +10,23 @@ does not invalidate saved data. See [branding](branding.md).
 
 Native startup loads the last saved inventory for the first frame. Automatic
 scans are scheduled once the window is ready and are limited to one attempt
-per provider per rolling 24 hours.
+per provider per rolling 24 hours. They list installed software only; they do
+not ask for update candidates or refresh Scoop buckets.
 Automatic scans queue WinGet, Scoop, Store and Local first without increasing
 the number of workers. Results that are ready together are applied together;
 the app does not wait for slower providers to show completed results.
 Recent installed snapshots count even if the candidate check was incomplete.
 Attempts are recorded separately from results, so an unavailable provider does
 not retry on every launch or erase its last successful inventory. Invalid or
-future-dated timestamps do not block a scan. Reuse does not change the original
-scan or candidate timestamps.
+future-dated timestamps do not block a scan. Reopening a saved inventory does
+not change its timestamp. When a scan runs, unchanged installations retain
+their last successful candidate results and their original check time; new or
+changed installations remain unchecked.
 
 The toolbar scan and Inventory actions bypass the cooldown. They never install
 or upgrade packages. The toolbar shows when inventory last scanned successfully.
-Scoop still checks its bucket metadata freshness before querying local status.
+Explicit update checks still contact provider sources as needed. For Scoop,
+that includes checking bucket metadata freshness before querying local status.
 
 ## Parsed Notes
 

@@ -152,12 +152,19 @@ pub struct Scan {
     pub checked_at: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub candidate_checked_at: Option<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub candidate_results_reused: bool,
     pub update_check_requested: bool,
     pub update_check_succeeded: bool,
     pub packages: Vec<InstalledPackage>,
     pub warnings: Vec<String>,
 }
 impl Scan {
+    pub fn candidate_requested(&self, package: &InstalledPackage) -> bool {
+        self.update_check_requested
+            && (!self.candidate_results_reused || package.candidate_check_succeeded == Some(true))
+    }
+
     pub fn candidate_time(&self) -> &str {
         self.candidate_checked_at
             .as_deref()
@@ -555,6 +562,7 @@ pub fn parse(manager: Manager, updates: bool, input: &str) -> Result<Scan> {
         manager,
         checked_at: chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
         candidate_checked_at: None,
+        candidate_results_reused: false,
         update_check_requested: updates,
         update_check_succeeded: updates,
         packages: vec![],
