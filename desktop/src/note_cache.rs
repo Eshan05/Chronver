@@ -1,9 +1,13 @@
 use crate::{live::Query, model::State};
 use chrono::{DateTime, Utc};
-use releasescout_engine::{HistoryCursor, HistoryPage, Report};
+use releasescout_engine::{
+    HistoryCursor, HistoryPage, Report, Source, Stream,
+    http::{Document, Fetcher},
+};
 use rune::{Latest, TextEdit};
 use serde::{Deserialize, Serialize};
 use std::{
+    cell::RefCell,
     collections::{HashSet, VecDeque},
     fs,
     io::{Read, Write},
@@ -95,8 +99,10 @@ impl Context {
     }
 }
 
-pub(crate) fn has_fresh_range(directory: &Path, expected: &Context) -> bool {
-    expected.selection.range && fresh_match(directory, expected).is_some()
+#[cfg(test)]
+fn has_fresh_range(directory: &Path, expected: &Context) -> bool {
+    expected.selection.range
+        && matching_entry(directory, expected).is_some_and(|entry| entry.fresh(Utc::now()))
 }
 
 pub fn context(s: &State, id: &str) -> Option<Context> {
@@ -115,6 +121,14 @@ pub fn context(s: &State, id: &str) -> Option<Context> {
         &p.watchlist,
         crate::activity::hash(std::env::var("GITHUB_TOKEN").unwrap_or_default()),
     ));
+    // Zod's old saved report came from a migration guide, not its release source.
+    let uses_zod = p.watchlist.as_ref().is_some_and(|e| e.name == "zod")
+        || p.dependency.as_ref().is_some_and(|d| d.package == "zod");
+    let key = if uses_zod {
+        crate::activity::hash((key, "zod-release-source"))
+    } else {
+        key
+    };
     Some(Context {
         id: id.into(),
         key,
@@ -232,30 +246,108 @@ fn load(directory: &Path, expected: &Context) -> Result<Option<Entry>, String> {
     error.map_or(Ok(None), Err)
 }
 
-fn fresh_match(directory: &Path, expected: &Context) -> Option<Entry> {
-    let now = Utc::now();
+fn matching_entry(directory: &Path, expected: &Context) -> Option<Entry> {
     [
         cache_path(directory, expected),
         slot_path(directory, expected, ""),
     ]
-        .iter()
-        .filter_map(|path| load_entry(path, expected).ok().flatten())
-        .find(|entry| {
-            entry.context.selection.matches_request(&expected.selection)
-                && entry.report.notes.iter().any(|note| note.authored_notes)
-                && entry.fresh(now)
-        })
+    .iter()
+    .filter_map(|path| load_entry(path, expected).ok().flatten())
+    .find(|entry| {
+        entry.context.selection.matches_request(&expected.selection)
+            && entry.report.notes.iter().any(|note| note.authored_notes)
+            && !entry.report.evidence.is_empty()
+    })
 }
 
-pub(crate) fn cached_page(directory: &Path, expected: &Context) -> Option<HistoryPage> {
-    let mut entry = fresh_match(directory, expected)?;
-    if entry.report.evidence.is_empty() {
-        return None;
-    }
-    mark_cached(&mut entry.report, true);
-    Some(HistoryPage {
+fn page(entry: Entry) -> HistoryPage {
+    HistoryPage {
         report: entry.report,
         next: entry.next,
+    }
+}
+
+pub(crate) fn single_document(stream: &Stream) -> Option<String> {
+    match stream.sources.as_slice() {
+        [Source::Document { url, .. }] if stream.npm_date_package.is_none() => Some(url.clone()),
+        _ => None,
+    }
+}
+
+type FetchResult = releasescout_engine::Result<Document>;
+
+pub(crate) struct FirstDocument<F> {
+    inner: F,
+    resource: RefCell<Option<(String, FetchResult)>>,
+}
+
+impl<F: Fetcher> Fetcher for FirstDocument<F> {
+    fn npm_dates(&self, package: &str) -> FetchResult {
+        self.inner.npm_dates(package)
+    }
+
+    fn get(&self, url: &str) -> FetchResult {
+        let mut resource = self.resource.borrow_mut();
+        if resource.as_ref().is_some_and(|(saved, _)| saved == url) {
+            return resource.take().unwrap().1;
+        }
+        self.inner.get(url)
+    }
+}
+
+// The second result signals a fresh parsed-cache hit with no source request.
+pub(crate) fn fetch_page<F: Fetcher>(
+    saved: Option<(PathBuf, Context)>,
+    url: Option<String>,
+    connect: impl FnOnce() -> releasescout_engine::Result<F>,
+    fetch: impl FnOnce(FirstDocument<F>) -> releasescout_engine::Result<HistoryPage>,
+) -> releasescout_engine::Result<(HistoryPage, bool)> {
+    let mut saved = saved.and_then(|(directory, context)| matching_entry(&directory, &context));
+    if saved.as_ref().is_some_and(|entry| entry.fresh(Utc::now())) {
+        let mut entry = saved.take().unwrap();
+        mark_cached(&mut entry.report, true);
+        return Ok((page(entry), true));
+    }
+    let inner = connect()?;
+    let mut resource = None;
+    if let (Some(mut entry), Some(url)) = (saved, url)
+        && let [original] = entry.report.evidence.as_slice()
+        && let Some(fingerprint) = original.content_sha256.as_deref()
+        && !may_need_github_dates(&url, &entry.report)
+    {
+        let result = inner.get(&url);
+        if let Ok(doc) = &result
+            && matches!(
+                doc.evidence.cache.as_str(),
+                "network" | "revalidated_cache" | "fresh_cache"
+            )
+            && doc.evidence.url == original.url
+            && doc.content_sha256() == fingerprint
+        {
+            let mut evidence = doc.evidence.clone();
+            evidence.content_sha256 = Some(fingerprint.to_owned());
+            entry.report.evidence[0] = evidence;
+            return Ok((page(entry), false));
+        } else {
+            resource = Some((url, result));
+        }
+    }
+    let page = fetch(FirstDocument {
+        inner,
+        resource: RefCell::new(resource),
+    })?;
+    Ok((page, false))
+}
+
+fn may_need_github_dates(url: &str, report: &Report) -> bool {
+    releasescout_engine::http::https(url).is_ok_and(|url| {
+        matches!(
+            url.host_str(),
+            Some("github.com" | "raw.githubusercontent.com")
+        ) && report
+            .notes
+            .iter()
+            .any(|n| n.authored_notes && n.date.is_none() && n.version.is_some())
     })
 }
 
@@ -645,6 +737,7 @@ mod tests {
             url: "https://example.com/releases".into(),
             fetched_at: Utc::now().to_rfc3339(),
             cache: "network".into(),
+            content_sha256: None,
         }];
         for (range, title) in [(false, "Saved history result"), (true, "Saved range result")] {
             s.engine_query().range = range;
@@ -682,7 +775,87 @@ mod tests {
         assert!(s.fresh_note_lookup(&id).is_none(), "Refresh must bypass parsed notes");
         let mut mismatched = context(&s, &id).unwrap();
         mismatched.selection.to = "2.3.0".into();
-        assert!(cached_page(dir.path(), &mismatched).is_none());
+        assert!(matching_entry(dir.path(), &mismatched).is_none());
+    }
+
+    #[test]
+    fn revalidated_document_reuses_notes_only_when_the_parsed_body_matches() {
+        struct OneDocument<'a> {
+            calls: &'a std::cell::Cell<usize>,
+            body: &'a str,
+        }
+        const URL: &str = "https://example.com/changelog";
+        impl Fetcher for OneDocument<'_> {
+            fn get(&self, url: &str) -> FetchResult {
+                assert_eq!(url, URL);
+                self.calls.set(self.calls.get() + 1);
+                Ok(Document {
+                    body: self.body.into(),
+                    headers: Default::default(),
+                    evidence: releasescout_engine::Evidence {
+                        url: URL.into(),
+                        fetched_at: Utc::now().to_rfc3339(),
+                        cache: "revalidated_cache".into(),
+                        content_sha256: None,
+                    },
+                })
+            }
+        }
+        let dir = tempfile::tempdir().unwrap();
+        let s = state(dir.path());
+        let id = s.selected().unwrap().id.clone();
+        let context = context(&s, &id).unwrap();
+        let calls = std::cell::Cell::new(0);
+        let original = OneDocument {
+            calls: &calls,
+            body: "original",
+        }
+        .get(URL)
+        .unwrap();
+        let mut report = s.live.sessions[&id].report.clone().unwrap();
+        report.evidence = vec![original.evidence.clone()];
+        report.evidence[0].content_sha256 = Some(original.content_sha256());
+        save(
+            dir.path(),
+            Entry {
+                revision: REVISION,
+                context: context.clone(),
+                saved_at: Utc::now() - chrono::Duration::seconds(TTL + 1),
+                report: report.clone(),
+                next: None,
+                feed: None,
+                caption: String::new(),
+                local_stamp: None,
+            },
+        )
+        .unwrap();
+        for (body, should_parse) in [("original", false), ("different cached body", true)] {
+            calls.set(0);
+            let parsed = std::cell::Cell::new(false);
+            let (result, from_saved) = fetch_page(
+                Some((dir.path().to_owned(), context.clone())),
+                Some(URL.into()),
+                || {
+                    Ok(OneDocument {
+                        calls: &calls,
+                        body,
+                    })
+                },
+                |fetcher| {
+                    parsed.set(true);
+                    assert_eq!(fetcher.get(URL)?.body, body);
+                    Ok(HistoryPage {
+                        report: report.clone(),
+                        next: None,
+                    })
+                },
+            )
+            .unwrap();
+            assert_eq!(calls.get(), 1);
+            assert_eq!(parsed.get(), should_parse);
+            assert!(!from_saved);
+            assert_eq!(result.report.notes[0].body, report.notes[0].body);
+        }
     }
 
     #[test]
@@ -722,6 +895,14 @@ mod tests {
         let guard = context(&s, &id).unwrap();
         let range = guard.clone().for_version_range("1.0.0", "2.2.0");
         let now = Utc::now();
+        if report.evidence.is_empty() {
+            report.evidence.push(releasescout_engine::Evidence {
+                url: "https://example.com/releases".into(),
+                fetched_at: now.to_rfc3339(),
+                cache: "network".into(),
+                content_sha256: None,
+            });
+        }
         for item in &mut report.evidence {
             item.fetched_at = now.to_rfc3339();
             item.cache = "network".into();

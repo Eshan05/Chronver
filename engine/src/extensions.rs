@@ -508,6 +508,7 @@ pub fn notes(
                     url,
                     fetched_at: chrono::Utc::now().to_rfc3339(),
                     cache: "installed_file".into(),
+                    content_sha256: None,
                 });
                 if useful(&r) {
                     return Ok(r);

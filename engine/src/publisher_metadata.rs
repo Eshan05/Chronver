@@ -159,6 +159,7 @@ mod tests {
                     url: url.into(),
                     fetched_at: String::new(),
                     cache: String::new(),
+                    content_sha256: None,
                 },
             })
         }

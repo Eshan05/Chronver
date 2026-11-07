@@ -293,6 +293,9 @@ impl State {
             ..Default::default()
         };
         let saved = self.fresh_note_lookup(&id);
+        let document = saved
+            .as_ref()
+            .and_then(|_| crate::note_cache::single_document(stream));
         let catalog = self.live.catalog.clone();
         self.live.active = Some(id.clone());
         let q = self.live.sessions.get_mut(&id).unwrap();
@@ -310,16 +313,18 @@ impl State {
         p.releases.clear();
         p.sample_notes = false;
         self.live.work.request(id, move |id| {
-            if let Some((directory, context)) = saved
-                && let Some(page) = crate::note_cache::cached_page(&directory, &context)
-            {
-                return (id, Ok(page.report));
-            }
-            let result = HttpClient::new(options)
-                .and_then(|fetcher| {
-                    Engine { catalog, fetcher }.notes(&id, Some(&component), selection, false)
-                })
-                .map_err(|e| e.to_string());
+            let result = crate::note_cache::fetch_page(
+                saved,
+                document,
+                || HttpClient::new(options),
+                |fetcher| {
+                    Engine { catalog, fetcher }
+                        .notes(&id, Some(&component), selection, false)
+                        .map(|report| releasescout_engine::HistoryPage { report, next: None })
+                },
+            )
+            .map(|(page, _)| page.report)
+            .map_err(|e| e.to_string());
             (id, result)
         });
     }
@@ -372,6 +377,9 @@ impl State {
         } else {
             self.fresh_note_lookup(&id)
         };
+        let document = saved
+            .as_ref()
+            .and_then(|_| crate::note_cache::single_document(&profile.streams[q.component]));
         let catalog = self.live.catalog.clone();
         self.live.work.cancel();
         self.live.active = Some(id.clone());
@@ -392,16 +400,14 @@ impl State {
             p.sample_notes = false;
         }
         self.live.history.request(id, move |id| {
-            if let Some((directory, context)) = saved
-                && let Some(page) = crate::note_cache::cached_page(&directory, &context)
-            {
-                return (id, Ok(page), false);
-            }
-            let result = HttpClient::new(options)
-                .and_then(|fetcher| {
-                    Engine { catalog, fetcher }.history(&id, Some(&component), cursor, false)
-                })
-                .map_err(|e| e.to_string());
+            let result = crate::note_cache::fetch_page(
+                saved,
+                document,
+                || HttpClient::new(options),
+                |fetcher| Engine { catalog, fetcher }.history(&id, Some(&component), cursor, false),
+            )
+            .map(|(page, _)| page)
+            .map_err(|e| e.to_string());
             (id, result, append)
         });
     }

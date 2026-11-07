@@ -48,9 +48,25 @@ and Offline mode take precedence. The activity indicator shows when update notes
 are loading. Activity details count the update ranges ready from a fetch or
 saved result, and any attempts that returned no notes during this session.
 In the default cache mode, Load notes for detected software reuses a fresh
-parsed result for the exact selection, if available. Refresh bypasses it to
-revalidate the source. An uncached selection otherwise has no notes until its
-first successful fetch creates the parsed snapshot.
+parsed result for the exact selection, if available. Once it expires, a matching
+single-document result can reuse its parsed notes and pagination when
+revalidation confirms the same URL and body. Changed content is parsed normally.
+Refresh bypasses this shortcut to revalidate and parse the source. An uncached
+selection has no notes until its first successful fetch creates the parsed
+snapshot.
+
+For GitHub-hosted changelogs, a matching published Release can supply a missing
+date without replacing the changelog text or link. For a changelog in a
+subdirectory, the source must also specify how its tags identify that
+component. The lookup checks one page of release metadata for exact versions
+and retries with a smaller page if the first exceeds the response limit.
+Missing, ambiguous, or unavailable matches stay undated.
+
+A version stream can also declare an exact `npm_date_package`, such as
+`vercel` for Vercel CLI. If the notes still lack dates, Chronver checks that
+package's public npm publication timestamps by exact version. It caches only
+the version-to-date map, not the full registry response. This does not replace
+publisher dates, change note content, or run as part of the hourly watch.
 
 Identity includes the observation, installed/candidate versions, source profile,
 installed metadata and hashed credential scope. The captured request selection,
@@ -62,7 +78,7 @@ Saved results are marked cached, not newly fetched. Freshness is at most 15 minu
 and cannot exceed the original response evidence's freshness. Reopening or reading
 the cache does not rewrite its timestamp. Corrupt, oversized and incompatible
 entries are rejected; cache IO problems appear in Activity notices. Increment
-`note_cache::REVISION` when extraction semantics change without a profile change.
+`note_cache::REVISION` when an extraction change makes older results unusable.
 
 ## Downloaded Responses
 

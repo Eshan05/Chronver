@@ -25,6 +25,23 @@ impl<F: Fetcher> Engine<F> {
         cursor: Option<HistoryCursor>,
         include_inactive: bool,
     ) -> Result<HistoryPage> {
+        self.history_page(id, component, cursor, include_inactive, true)
+    }
+
+    /// First history page for version checks; publication dates are not needed.
+    pub fn version_snapshot(&self, id: &str, component: &str) -> Result<Report> {
+        self.history_page(id, Some(component), None, false, false)
+            .map(|page| page.report)
+    }
+
+    fn history_page(
+        &self,
+        id: &str,
+        component: Option<&str>,
+        cursor: Option<HistoryCursor>,
+        include_inactive: bool,
+        add_dates: bool,
+    ) -> Result<HistoryPage> {
         let package = self.package(id)?;
         if !include_inactive && !matches!(package.tracking.as_str(), "track" | "low_priority") {
             return Err(Error::Query("tracking is inactive".into()));
@@ -122,6 +139,9 @@ impl<F: Fetcher> Engine<F> {
                         page: next_page.unwrap_or(page),
                         offset: if github { 0 } else { offset + 20 },
                     });
+                    if add_dates {
+                        crate::publication_dates::fill(&self.fetcher, source, stream, &mut report);
+                    }
                     let page = HistoryPage { report, next };
                     if cursor.is_none()
                         && !page.report.notes.iter().any(|n| n.authored_notes)
@@ -214,6 +234,7 @@ impl<F: Fetcher> Engine<F> {
         validate_query(stream, &selection)?;
         let mut attempts = vec![];
         let mut best: Option<Report> = None;
+        let mut best_source = None;
         for source in &stream.sources {
             match self.retrieve(source, stream, &selection) {
                 Ok(retrieved) => {
@@ -233,6 +254,7 @@ impl<F: Fetcher> Engine<F> {
                     };
                     if best.as_ref().is_none_or(|old| score(&report) > score(old)) {
                         best = Some(report);
+                        best_source = Some(source);
                     }
                     if best
                         .as_ref()
@@ -260,6 +282,9 @@ impl<F: Fetcher> Engine<F> {
             evidence: vec![],
             attempts: vec![],
         });
+        if let Some(source) = best_source {
+            crate::publication_dates::fill(&self.fetcher, source, stream, &mut report);
+        }
         report.attempts = attempts;
         report.warnings.extend(
             [&package.caveats, &stream.caveats]
@@ -307,6 +332,7 @@ impl<F: Fetcher> Engine<F> {
                         url,
                         fetched_at: chrono::Utc::now().to_rfc3339(),
                         cache: "installed_file".into(),
+                        content_sha256: None,
                     }],
                 })
             }
@@ -326,7 +352,8 @@ impl<F: Fetcher> Engine<F> {
                 )
                 .map(|(data, _)| data),
             Source::Document { url, format, .. } => {
-                let doc = self.fetcher.get(url)?;
+                let mut doc = self.fetcher.get(url)?;
+                doc.evidence.content_sha256 = Some(doc.content_sha256());
                 let mut canonical = source.clone();
                 if let Source::Document { url, .. } = &mut canonical {
                     *url = doc.evidence.url.clone();

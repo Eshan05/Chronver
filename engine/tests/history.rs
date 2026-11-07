@@ -22,6 +22,7 @@ impl Fetcher for Fake {
                 url: url.into(),
                 fetched_at: "2026-11-10T00:00:00Z".into(),
                 cache: "network".into(),
+                content_sha256: None,
             },
         })
     }
@@ -74,7 +75,7 @@ fn official_atom_redirects_follow_repository_moves_but_not_foreign_feed_hosts() 
             if url.starts_with("https://api.github.com/") {
                 return Err(Error::Source("API unavailable".into()));
             }
-            Ok(Document{body:r#"<feed xmlns="http://www.w3.org/2005/Atom"><id>releases</id><title>Releases</title><updated>2026-11-10T00:00:00Z</updated><entry><id>tag:one</id><title>1.1.0</title><link href="https://github.com/newowner/b/releases/tag/1.1.0"/><updated>2026-11-10T00:00:00Z</updated><content>Fixed a startup crash.</content></entry></feed>"#.into(),headers:Default::default(),evidence:Evidence{url:if self.foreign{"https://foreign.example/releases.atom"}else{"https://github.com/newowner/b/releases.atom"}.into(),cache:"network".into(),fetched_at:"2026-11-10T00:00:00Z".into()}})
+            Ok(Document{body:r#"<feed xmlns="http://www.w3.org/2005/Atom"><id>releases</id><title>Releases</title><updated>2026-11-10T00:00:00Z</updated><entry><id>tag:one</id><title>1.1.0</title><link href="https://github.com/newowner/b/releases/tag/1.1.0"/><updated>2026-11-10T00:00:00Z</updated><content>Fixed a startup crash.</content></entry></feed>"#.into(),headers:Default::default(),evidence:Evidence{url:if self.foreign{"https://foreign.example/releases.atom"}else{"https://github.com/newowner/b/releases.atom"}.into(),cache:"network".into(),fetched_at:"2026-11-10T00:00:00Z".into(),content_sha256:None}})
         }
     }
     let catalog = engine().catalog;

@@ -51,6 +51,26 @@ pub fn html_markdown(input: &str, root: Option<&str>, base: &str) -> Result<Stri
             elements.len()
         )));
     }
+    let root = elements[0].id();
+    // Keep the link inline so linked headings and cards don't split into
+    // raw Markdown punctuation.
+    let headings = selector("h1,h2,h3,h4,h5,h6,p")?;
+    let linked_blocks: Vec<_> = html
+        .select(&selector("a[href]")?)
+        .filter_map(|a| {
+            let block = a.select(&headings).next()?;
+            Some((a.id(), block.id(), a.value().clone()))
+        })
+        .collect();
+    for (anchor, block, link) in linked_blocks {
+        let mut before = html.tree.get_mut(anchor).unwrap();
+        if let scraper::Node::Element(el) = before.value() {
+            el.name.local = "div".into();
+        }
+        let inner = html.tree.orphan(scraper::Node::Element(link)).id();
+        html.tree.get_mut(inner).unwrap().reparent_from_id_append(block);
+        html.tree.get_mut(block).unwrap().append_id(inner);
+    }
     let base = Url::parse(base).map_err(|e| Error::Config(e.to_string()))?;
     let link_ids: Vec<_> = html
         .select(&selector("a[href],img[src]")?)
@@ -72,7 +92,7 @@ pub fn html_markdown(input: &str, root: Option<&str>, base: &str) -> Result<Stri
             }
         }
     }
-    let element = html.select(&root).next().unwrap();
+    let element = scraper::ElementRef::wrap(html.tree.get(root).unwrap()).unwrap();
     Ok(html2md::parse_html(&element.inner_html()))
 }
 
@@ -549,6 +569,16 @@ mod tests {
         assert!(!notes[0].body.contains("bad()"));
         assert!(notes[0].body.contains("https://example.com/issue"));
         assert!(document("<p>layout changed</p>", &src).is_err());
+    }
+    #[test]
+    fn linked_cards_keep_clickable_headings_and_clean_bodies() {
+        let html = "<main><a href='/blog/v1'><div><h2>1.2.0</h2><p>Fixed a real bug.</p></div></a><a href='/blog/v0'><h2>1.1.0</h2><p>Older fixes.</p></a><a href='/more'><p>View all</p></a></main>";
+        let markdown = html_markdown(html, Some("main"), "https://example.com").unwrap();
+        assert!(markdown.contains("[1.2.0](https://example.com/blog/v1)"), "{markdown}");
+        assert!(markdown.contains("[View all](https://example.com/more)"), "{markdown}");
+        let notes = document(html, &source(Format::Html)).unwrap();
+        assert_eq!(notes[0].body.trim(), "Fixed a real bug.");
+        assert!(!notes[1].body.contains("\n]("), "{:?}", notes[1]);
     }
     #[test]
     fn heading_permalinks_and_button_titles_remain_parseable() {

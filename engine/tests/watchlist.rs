@@ -66,6 +66,7 @@ fn validation_prevents_duplicates_invalid_paths_and_oversized_lists() {
 struct Fake {
     pages: HashMap<String, String>,
     calls: RefCell<Vec<String>>,
+    cache: Option<&'static str>,
 }
 impl Fetcher for Fake {
     fn get(&self, url: &str) -> Result<Document> {
@@ -77,7 +78,8 @@ impl Fetcher for Fake {
                 headers: Default::default(),
                 evidence: Evidence {
                     url: url.into(),
-                    cache: "fixture".into(),
+                    cache: self.cache.unwrap_or("fixture").into(),
+                    content_sha256: None,
                     fetched_at: "2026-11-11T00:00:00Z".into(),
                 },
             })
@@ -89,6 +91,26 @@ impl Fetcher for &Fake {
         <Fake as Fetcher>::get(self, url)
     }
 }
+#[test]
+fn latest_stable_is_one_identity_checked_request_without_notes() {
+    let key = "https://registry.npmjs.org/fixture-package/latest".to_owned();
+    let mut fetch = Fake {
+        pages: HashMap::from([(key.clone(), json!({"name":"fixture-package","version":"2.0.0"}).to_string())]),
+        cache: Some("network"),
+        ..Default::default()
+    };
+    let watched = entry("fixture-package");
+    assert_eq!(watchlist::latest_stable(&fetch, &watched).unwrap(), "2.0.0");
+    assert_eq!(*fetch.calls.borrow(), [key.clone()]);
+    fetch.cache = Some("stale_cache");
+    assert!(watchlist::latest_stable(&fetch, &watched).is_err());
+    fetch.cache = Some("network");
+    fetch.pages.insert(key.clone(), json!({"name":"fixture-package","version":"3.0.0-alpha.1"}).to_string());
+    assert!(watchlist::latest_stable(&fetch, &watched).is_err());
+    fetch.pages.insert(key, json!({"name":"some-other-package","version":"3.0.0"}).to_string());
+    assert!(watchlist::latest_stable(&fetch, &watched).is_err());
+}
+
 #[test]
 fn registry_identity_must_match_and_sparse_notes_stay_honest() {
     let mut fetch = Fake {

@@ -3,7 +3,7 @@ use crate::{
     note_cache::{self, Context},
 };
 use releasescout_engine::{
-    Catalog, Channel, Engine, Error, Package, Report, Selection, Source,
+    Catalog, Channel, Engine, Error, HistoryPage, Package, Report, Selection, Source,
     http::{CacheOptions, Document, Fetcher, HttpClient},
     version::Version,
 };
@@ -196,6 +196,10 @@ fn retry_delay(attempt: u8, jitter: u128) -> Duration {
 struct WithRetry(HttpClient, Cell<u8>);
 
 impl Fetcher for WithRetry {
+    fn npm_dates(&self, package: &str) -> releasescout_engine::Result<Document> {
+        self.0.npm_dates(package)
+    }
+
     fn get(&self, url: &str) -> releasescout_engine::Result<Document> {
         loop {
             let result = self.0.get(url);
@@ -214,42 +218,51 @@ impl Fetcher for WithRetry {
 }
 
 fn fetch(job: Job, directory: &Path) -> Outcome {
-    if note_cache::has_fresh_range(directory, &job.desired) {
-        return Outcome::Saved;
-    }
-    fetch_report(job).map_or(Outcome::Unavailable, Outcome::Loaded)
-}
-
-fn fetch_report(job: Job) -> Option<Report> {
     let id = job.profile.id.clone();
+    let document = job
+        .profile
+        .streams
+        .iter()
+        .find(|stream| stream.id == job.component)
+        .and_then(note_cache::single_document);
     let catalog = Catalog {
         schema_version: 1,
         packages: vec![job.profile],
     };
-    let client = HttpClient::new(CacheOptions {
+    let options = CacheOptions {
         directory: crate::live::cache_directory(),
         public_only: true,
         github_token: std::env::var("GITHUB_TOKEN").ok(),
         ..Default::default()
-    })
-    .ok()?;
-    let report = Engine {
-        catalog,
-        fetcher: WithRetry(client, Cell::new(0)),
-    }
-    .notes(
-        &id,
-        Some(&job.component),
-        Selection::Versions {
-            from: job.from,
-            to: job.to,
-            channel: job.channel,
+    };
+    let result = note_cache::fetch_page(
+        Some((directory.to_owned(), job.desired)),
+        document,
+        || HttpClient::new(options).map(|client| WithRetry(client, Cell::new(0))),
+        |fetcher| {
+            Engine { catalog, fetcher }
+                .notes(
+                    &id,
+                    Some(&job.component),
+                    Selection::Versions {
+                        from: job.from,
+                        to: job.to,
+                        channel: job.channel,
+                    },
+                    false,
+                )
+                .map(|report| HistoryPage { report, next: None })
         },
-        false,
-    )
-    .ok()?;
-    (report.status != "source_failed" && report.notes.iter().any(|n| n.authored_notes))
-        .then_some(report)
+    );
+    match result {
+        Ok((_, true)) => Outcome::Saved,
+        Ok((HistoryPage { report, .. }, false))
+            if report.status != "source_failed" && report.notes.iter().any(|n| n.authored_notes) =>
+        {
+            Outcome::Loaded(report)
+        }
+        _ => Outcome::Unavailable,
+    }
 }
 
 impl State {

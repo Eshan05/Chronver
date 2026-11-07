@@ -443,6 +443,7 @@ mod tests {
                 url: "https://example.com/releases".into(),
                 fetched_at: "2026-11-14T00:00:00Z".into(),
                 cache: "offline_cache".into(),
+                content_sha256: None,
             });
         assert_eq!(publisher(&s, s.selected().unwrap()).value, "2.2.0 / cached");
         s.live.sessions.get_mut(&id).unwrap().error = Some("Request failed".into());

@@ -164,6 +164,7 @@ mod tests {
                     url: url.into(),
                     fetched_at: "2026-11-14T00:00:00Z".into(),
                     cache: "fixture".into(),
+                    content_sha256: None,
                 },
             })
         }

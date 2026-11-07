@@ -3786,6 +3786,7 @@ fn recovered_notes_stay_visible_and_full_diagnostics_remain_expandable() {
                     url: "https://example.com/release".into(),
                     fetched_at: "2026-11-11T00:00:00Z".into(),
                     cache: "stale_cache_upstream_error".into(),
+                    content_sha256: None,
                 }],
                 attempts: vec![],
             }),

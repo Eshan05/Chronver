@@ -88,6 +88,9 @@ pub struct Stream {
     pub channel: Channel,
     #[serde(default)]
     pub caveats: String,
+    /// Exact npm package identity used only to date otherwise undated notes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub npm_date_package: Option<String>,
     pub sources: Vec<Source>,
 }
 
@@ -194,6 +197,8 @@ pub struct Evidence {
     pub url: String,
     pub fetched_at: String,
     pub cache: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_sha256: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

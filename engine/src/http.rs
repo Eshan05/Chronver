@@ -6,8 +6,16 @@ use crate::{
 use chrono::{DateTime, Utc};
 use reqwest::{blocking::Client, redirect::Policy};
 use sha2::{Digest, Sha256};
-use std::{collections::BTreeMap, fs, io::Read, path::PathBuf, time::Duration};
+use std::{
+    collections::BTreeMap,
+    fs,
+    io::{BufReader, Read},
+    path::PathBuf,
+    time::Duration,
+};
 use url::Url;
+
+pub(crate) const BODY_LIMIT_ERROR: &str = "response exceeds 8 MiB";
 
 pub struct Request {
     pub url: Url,
@@ -21,6 +29,14 @@ pub struct Response {
 }
 pub trait Transport {
     fn send(&self, request: Request) -> Result<Response>;
+    fn send_npm_dates(&self, request: Request) -> Result<Response> {
+        let mut response = self.send(request)?;
+        if response.status == 200 {
+            let meta: crate::watchlist::NpmMetadata = serde_json::from_str(&response.body)?;
+            response.body = serde_json::to_string(&meta.into_dates())?;
+        }
+        Ok(response)
+    }
 }
 pub struct Network {
     client: Client,
@@ -38,9 +54,8 @@ impl Network {
             public_only: false,
         })
     }
-}
-impl Transport for Network {
-    fn send(&self, request: Request) -> Result<Response> {
+
+    fn response(&self, request: Request) -> Result<reqwest::blocking::Response> {
         let client = if self.public_only {
             use std::net::ToSocketAddrs;
             crate::icons::safe_url(request.url.as_str())
@@ -71,20 +86,79 @@ impl Transport for Network {
         for (key, value) in request.headers {
             builder = builder.header(key, value);
         }
-        let response = builder.send()?;
-        let status = response.status().as_u16();
-        let headers = response
+        Ok(builder.send()?)
+    }
+
+    // Large npm metadata is streamed on demand and never enters the shared cache.
+    pub(crate) fn npm_metadata<T: serde::de::DeserializeOwned>(url: Url) -> Result<T> {
+        let mut network = Self::new()?;
+        network.public_only = true;
+        let response = network.response(Request {
+            url: url.clone(),
+            headers: BTreeMap::from([
+                ("accept".into(), "application/json".into()),
+                ("accept-encoding".into(), "gzip".into()),
+            ]),
+            body: None,
+        })?;
+        if !response.status().is_success() {
+            return Err(Error::Http {
+                status: response.status().as_u16(),
+                url: url.to_string(),
+                detail: String::new(),
+            });
+        }
+        Self::decode_npm_metadata(response)
+    }
+
+    fn decode_npm_metadata<T: serde::de::DeserializeOwned>(
+        response: reqwest::blocking::Response,
+    ) -> Result<T> {
+        const MAX_METADATA: u64 = 128 * 1024 * 1024;
+        let gzip = response
             .headers()
-            .iter()
-            .filter_map(|(k, v)| v.to_str().ok().map(|v| (k.to_string(), v.to_owned())))
-            .collect();
+            .get("content-encoding")
+            .is_some_and(|v| v == "gzip");
+        let reader: Box<dyn Read> = if gzip {
+            Box::new(flate2::read::GzDecoder::new(response.take(MAX_METADATA + 1)))
+        } else {
+            Box::new(response)
+        };
+        let mut input = BufReader::new(reader.take(MAX_METADATA + 1));
+        let value = serde_json::from_reader(&mut input);
+        if input.get_ref().limit() == 0 {
+            return Err(Error::Source("npm metadata exceeds 128 MiB".into()));
+        }
+        Ok(value?)
+    }
+}
+impl Transport for Network {
+    fn send_npm_dates(&self, mut request: Request) -> Result<Response> {
+        request.headers.insert("accept".into(), "application/json".into());
+        request.headers.insert("accept-encoding".into(), "gzip".into());
+        let response = self.response(request)?;
+        let status = response.status().as_u16();
+        let headers = response_headers(&response);
+        let body = if status == 200 {
+            let meta: crate::watchlist::NpmMetadata = Self::decode_npm_metadata(response)?;
+            serde_json::to_string(&meta.into_dates())?
+        } else {
+            String::new()
+        };
+        Ok(Response { status, headers, body })
+    }
+
+    fn send(&self, request: Request) -> Result<Response> {
+        let response = self.response(request)?;
+        let status = response.status().as_u16();
+        let headers = response_headers(&response);
         if response.content_length().is_some_and(|n| n > MAX_BODY) {
-            return Err(Error::Source("response exceeds 8 MiB".into()));
+            return Err(Error::Source(BODY_LIMIT_ERROR.into()));
         }
         let mut bytes = Vec::new();
         response.take(MAX_BODY + 1).read_to_end(&mut bytes)?;
         if bytes.len() as u64 > MAX_BODY {
-            return Err(Error::Source("response exceeds 8 MiB".into()));
+            return Err(Error::Source(BODY_LIMIT_ERROR.into()));
         }
         let body =
             String::from_utf8(bytes).map_err(|_| Error::Source("response is not UTF-8".into()))?;
@@ -94,6 +168,12 @@ impl Transport for Network {
             body,
         })
     }
+}
+
+fn response_headers(response: &reqwest::blocking::Response) -> BTreeMap<String, String> {
+    response.headers().iter()
+        .filter_map(|(k, v)| v.to_str().ok().map(|v| (k.to_string(), v.to_owned())))
+        .collect()
 }
 
 #[derive(Clone)]
@@ -123,8 +203,22 @@ pub struct Document {
     pub headers: BTreeMap<String, String>,
     pub evidence: Evidence,
 }
+impl Document {
+    pub fn content_sha256(&self) -> String {
+        format!("{:x}", Sha256::digest(self.body.as_bytes()))
+    }
+}
 pub trait Fetcher {
     fn get(&self, url: &str) -> Result<Document>;
+
+    /// Read the public npm package's publication dates without retrieving tarballs.
+    fn npm_dates(&self, package: &str) -> Result<Document> {
+        let registry = crate::watchlist::npm_registry_url(package)?;
+        let mut document = self.get(registry.as_str())?;
+        let meta: crate::watchlist::NpmMetadata = serde_json::from_str(&document.body)?;
+        document.body = serde_json::to_string(&meta.into_dates())?;
+        Ok(document)
+    }
 }
 pub struct HttpClient<T = Network> {
     pub options: CacheOptions,
@@ -155,7 +249,12 @@ fn github(url: &Url) -> bool {
 }
 impl<T: Transport> Fetcher for HttpClient<T> {
     fn get(&self, input: &str) -> Result<Document> {
-        self.request(input, None)
+        self.request(input, None, false)
+    }
+
+    fn npm_dates(&self, package: &str) -> Result<Document> {
+        let registry = crate::watchlist::npm_registry_url(package)?;
+        self.request(registry.as_str(), None, true)
     }
 }
 impl<T: Transport> HttpClient<T> {
@@ -164,9 +263,10 @@ impl<T: Transport> HttpClient<T> {
         self.request(
             "https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery",
             Some(body.to_string()),
+            false,
         )
     }
-    fn request(&self, input: &str, body: Option<String>) -> Result<Document> {
+    fn request(&self, input: &str, body: Option<String>, npm_dates: bool) -> Result<Document> {
         if self.options.public_only && crate::icons::safe_url(input).is_none() {
             return Err(Error::Source("unsafe discovered source URL".into()));
         }
@@ -179,7 +279,8 @@ impl<T: Transport> HttpClient<T> {
         let key = format!(
             "{:x}",
             Sha256::digest(format!(
-                "{input}\n{scope}{}{}",
+                "{input}\n{scope}{}{}{}",
+                if npm_dates { "\nnpm-publication-dates-v1" } else { "" },
                 if self.options.public_only {
                     "\npublic"
                 } else {
@@ -263,11 +364,16 @@ impl<T: Transport> HttpClient<T> {
                     }
                 }
             }
-            let response = self.transport.send(Request {
+            let request = Request {
                 url: url.clone(),
                 headers,
                 body: body.clone(),
-            });
+            };
+            let response = if npm_dates {
+                self.transport.send_npm_dates(request)
+            } else {
+                self.transport.send(request)
+            };
             let response = match response {
                 Ok(response) => response,
                 Err(error) => {
@@ -278,7 +384,7 @@ impl<T: Transport> HttpClient<T> {
                 }
             };
             if response.body.len() as u64 > MAX_BODY {
-                return Err(Error::Source("response exceeds 8 MiB".into()));
+                return Err(Error::Source(BODY_LIMIT_ERROR.into()));
             }
             if response.status == 304 {
                 let mut entry =
@@ -304,6 +410,9 @@ impl<T: Transport> HttpClient<T> {
                     .join(location)
                     .map_err(|e| Error::Source(e.to_string()))?;
                 https(next.as_str())?;
+                if npm_dates && next.origin() != url.origin() {
+                    return Err(Error::Source("npm publication metadata redirected off registry".into()));
+                }
                 if redirect == 3
                     || (next.origin() != url.origin() && !self.options.public_only)
                     || (self.options.public_only && crate::icons::safe_url(next.as_str()).is_none())
@@ -398,6 +507,7 @@ fn document(entry: &Entry, cache: &str) -> Document {
                 .unwrap_or_else(|| entry.url.clone()),
             fetched_at: entry.fetched_at.to_rfc3339(),
             cache: cache.into(),
+            content_sha256: None,
         },
     }
 }
@@ -426,6 +536,29 @@ mod tests {
             body: body.into(),
         }
     }
+    #[test]
+    fn npm_dates_cache_stores_compact_metadata_and_revalidates() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut client = HttpClient {
+            options: CacheOptions { directory: dir.path().into(), ..Default::default() },
+            transport: Fake {
+                replies: RefCell::new(vec![
+                    response(200, &[("etag", "npm")], r#"{"name":"pkg","versions":{"1.0.0":{"description":"not cached"}},"time":{"created":"2026-11-01T00:00:00Z","1.0.0":"2026-11-02T00:00:00Z"}}"#),
+                    response(304, &[], ""),
+                ]),
+                requests: RefCell::new(vec![]),
+            },
+        };
+        assert_eq!(client.npm_dates("pkg").unwrap().body, r#"{"name":"pkg","dates":{"1.0.0":"2026-11-02"}}"#);
+        assert_eq!(client.npm_dates("pkg").unwrap().evidence.cache, "fresh_cache");
+        client.options.refresh = true;
+        assert_eq!(client.npm_dates("pkg").unwrap().evidence.cache, "revalidated_cache");
+        assert_eq!(client.transport.requests.borrow()[1].headers["if-none-match"], "npm");
+        client.options.offline = true;
+        assert_eq!(client.npm_dates("pkg").unwrap().evidence.cache, "offline_cache");
+        assert!(matches!(client.get("https://registry.npmjs.org/pkg"), Err(Error::Offline(_))));
+    }
+
     #[test]
     fn discovered_http_cache_is_separate_and_private_urls_never_reach_transport() {
         let dir = tempfile::tempdir().unwrap();

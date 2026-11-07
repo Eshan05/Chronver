@@ -82,6 +82,7 @@ impl Fetcher for Fake {
                 url: url.into(),
                 fetched_at: "2026-11-10T00:00:00Z".into(),
                 cache: "network".into(),
+                content_sha256: None,
             },
         })
     }
@@ -103,6 +104,146 @@ fn range(from: &str, to: &str) -> Selection {
         channel: Channel::Stable,
     }
 }
+
+#[test]
+fn undated_github_changelog_notes_use_exact_published_release_dates() {
+    const DOC: &str = "https://raw.githubusercontent.com/example/project/main/CHANGELOG.md";
+    const RELEASES: &str =
+        "https://api.github.com/repos/example/project/releases?per_page=100&page=1";
+    let body = "## 1.3.0 (2026-11-04)\nFixed the desktop startup crash.\n## 1.2.0\nAdded a local export mode.\n## 1.1.0\nImproved a local option.\n## 1.0.0\nInitial working software release.";
+    let mut app = document(body);
+    let stream = &mut app.catalog.packages[0].streams[0];
+    if let Source::Document { url, boundary, .. } = &mut stream.sources[0] {
+        *url = DOC.into();
+        *boundary = r"(?P<version>\d+\.\d+\.\d+)(?: \((?P<date>\d{4}-\d{2}-\d{2})\))?".into();
+    }
+    let release = |tag: &str, day: &str, draft: bool| {
+        serde_json::json!({
+            "tag_name": tag, "published_at": format!("2026-11-{day}T10:00:00Z"),
+            "draft": draft, "prerelease": false
+        })
+    };
+    let data = [
+        release("v1.3.0", "09", false),
+        release("v1.2.0", "03", false),
+        release("v1.1.0", "02", false),
+        release("1.1.0", "08", false),
+        release("v1.0.0", "01", true),
+    ];
+    app.fetcher.docs.insert(DOC.into(), (body.into(), None));
+    app.fetcher.docs.insert(
+        RELEASES.into(),
+        (serde_json::to_string(&data).unwrap(), None),
+    );
+    let report = app
+        .notes("test", None, range("1.0.0", "1.3.0"), false)
+        .unwrap();
+    assert_eq!(
+        report
+            .notes
+            .iter()
+            .map(|n| n.date.map(|d| d.to_string()))
+            .collect::<Vec<_>>(),
+        [Some("2026-11-04".into()), Some("2026-11-03".into()), None]
+    );
+    assert!(report.notes[1].body.contains("local export"));
+    assert!(report.notes[1].url.starts_with(DOC));
+    assert_eq!(report.evidence.last().unwrap().url, RELEASES);
+    assert!(report.evidence[0].content_sha256.is_some());
+    assert_eq!(app.fetcher.calls.borrow().as_slice(), [DOC, RELEASES]);
+
+    let history = app.history("test", None, None, false).unwrap();
+    assert_eq!(history.report.notes[1].date, report.notes[1].date);
+    assert!(history.report.notes.last().unwrap().date.is_none());
+    app.fetcher.docs.remove(RELEASES);
+    let offline = app
+        .notes("test", None, range("1.0.0", "1.3.0"), false)
+        .unwrap();
+    assert_eq!(offline.notes[1].body, report.notes[1].body);
+    assert!(offline.notes[1].date.is_none());
+
+    const SCOPED: &str =
+        "https://raw.githubusercontent.com/example/project/main/packages/tool/CHANGELOG.md";
+    let stream = &mut app.catalog.packages[0].streams[0];
+    if let Source::Document { url, .. } = &mut stream.sources[0] {
+        *url = SCOPED.into();
+    }
+    stream.sources.push(Source::Github {
+        owner: "example".into(),
+        repo: "project".into(),
+        tag_prefix: "tool-".into(),
+        tag_pattern: None,
+        max_pages: 1,
+    });
+    app.fetcher.docs.insert(SCOPED.into(), (body.into(), None));
+    let scoped_releases = [
+        release("v1.2.0", "06", false),
+        release("tool-v1.2.0", "03", false),
+    ];
+    app.fetcher.docs.insert(
+        RELEASES.into(),
+        (serde_json::to_string(&scoped_releases).unwrap(), None),
+    );
+    let scoped = app.history("test", None, None, false).unwrap();
+    assert_eq!(scoped.report.notes[1].date, report.notes[1].date);
+}
+#[test]
+fn npm_publication_fallback_keeps_authored_notes_and_does_not_guess_dates() {
+    const DOC: &str = "https://raw.githubusercontent.com/example/project/main/packages/cli/CHANGELOG.md";
+    const REGISTRY: &str = "https://registry.npmjs.org/example-cli";
+    const BODY: &str = "## 1.4.0 (2026-11-06)\nFixed a Windows startup crash.\n## 1.3.0\nAdded a local export mode.\n## 1.2.0\nImproved credential storage.\n## 1.1.0\nImproved local debugging.\n## 1.0.0\nInitial working software release.";
+    let mut app = document(BODY);
+    let stream = &mut app.catalog.packages[0].streams[0];
+    stream.npm_date_package = Some("example-cli".into());
+    if let Source::Document { url, boundary, .. } = &mut stream.sources[0] {
+        *url = DOC.into();
+        *boundary = r"(?P<version>\d+\.\d+\.\d+)(?: \((?P<date>\d{4}-\d{2}-\d{2})\))?".into();
+    }
+    app.fetcher.docs.insert(DOC.into(), (BODY.into(), None));
+    let mut registry = serde_json::json!({
+        "name": "example-cli",
+        "versions": { "1.4.0": {}, "1.3.0": {}, "1.2.1": {} },
+        "time": {
+            "1.4.0": "2026-11-07T09:00:00Z",
+            "1.3.0": "2026-11-04T01:00:00+02:00",
+            "1.2.1": "2026-11-02T09:00:00Z",
+            "1.1.0": "2026-11-01T09:00:00Z"
+        }
+    });
+    app.fetcher.docs.insert(REGISTRY.into(), (registry.to_string(), None));
+    let report = app.notes("test", None, range("1.0.0", "1.4.0"), false).unwrap();
+    assert_eq!(report.notes.iter().map(|n| n.date.map(|d| d.to_string())).collect::<Vec<_>>(),
+        [Some("2026-11-06".into()), Some("2026-11-03".into()), None, None]);
+    assert_eq!(report.notes[1].body, "Added a local export mode.");
+    assert!(report.notes[1].url.starts_with(DOC));
+    assert_eq!(report.evidence.last().unwrap().url, REGISTRY);
+    assert_eq!(app.fetcher.calls.borrow().as_slice(), [DOC, REGISTRY]);
+    let history = app.history("test", None, None, false).unwrap();
+    assert_eq!(history.report.notes[1].date, report.notes[1].date);
+    app.fetcher.calls.borrow_mut().clear();
+    let version_only = app.version_snapshot("test", "main").unwrap();
+    assert!(version_only.notes[1].date.is_none());
+    assert_eq!(app.fetcher.calls.borrow().as_slice(), [DOC]);
+
+    registry["name"] = "wrong-package".into();
+    app.fetcher.docs.insert(REGISTRY.into(), (registry.to_string(), None));
+    let report = app.notes("test", None, range("1.0.0", "1.4.0"), false).unwrap();
+    assert!(report.notes[1].date.is_none());
+    assert_eq!(report.evidence.len(), 1);
+}
+
+#[test]
+fn atlas_release_date_comes_from_the_publisher_changelog() {
+    let catalog = catalog::bundled().unwrap();
+    let package = catalog.packages.iter().find(|p| p.name == "MongoDB Atlas CLI").unwrap();
+    let source = &package.streams[0].sources[0];
+    let notes = parse::document(
+        "<main><h2>Atlas CLI 1.59.1</h2><p>Released 09 October 2026</p><p>Added platform support.</p></main>",
+        source,
+    ).unwrap();
+    assert_eq!(notes[0].date.unwrap().to_string(), "2026-10-09");
+}
+
 #[test]
 fn selects_entire_interval_by_version_not_source_order() {
     let e = document(
@@ -376,6 +517,7 @@ fn redirected_indexes_and_articles_resolve_links_at_their_canonical_urls() {
                     url: canonical.into(),
                     fetched_at: "2026-11-10T00:00:00Z".into(),
                     cache: "network".into(),
+                    content_sha256: None,
                 },
             })
         }

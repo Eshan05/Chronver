@@ -26,6 +26,7 @@ pub fn scene(s: &mut State, found: bool) {
                     scheme: releasescout_engine::Scheme::Semver,
                     channel: releasescout_engine::Channel::Stable,
                     caveats: "Automatically discovered source; coverage unverified.".into(),
+                    npm_date_package: None,
                     sources: vec![source],
                 }],
                 attempts: vec![],
@@ -214,6 +215,7 @@ mod tests {
                 scheme: Scheme::Semver,
                 channel: Channel::Stable,
                 caveats: "Discovered".into(),
+                npm_date_package: None,
                 sources: vec![Source::Feed {
                     url: "https://example.com/feed.xml".into(),
                 }],

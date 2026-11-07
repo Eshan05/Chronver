@@ -329,7 +329,7 @@ pub fn installed_document(
 }
 fn stream(source: Source, basis: Basis, _hints: &Hints) -> Stream {
     Stream{id:if basis==Basis::Version {"version-notes"}else{"dated-updates"}.into(),scope:if basis==Basis::Version {"Metadata-discovered version notes"}else{"Official-site dated updates; installed-version applicability unverified"}.into(),basis,
-        scheme:Scheme::Numeric,channel:Channel::Stable,caveats:"Automatically discovered from installed metadata, not a reviewed product/component binding. Two-part headings describe a release line, not each patch in that line.".into(),sources:vec![source]}
+        scheme:Scheme::Numeric,channel:Channel::Stable,caveats:"Automatically discovered from installed metadata, not a reviewed product/component binding. Two-part headings describe a release line, not each patch in that line.".into(),npm_date_package:None,sources:vec![source]}
 }
 fn usable(fetch: &impl Fetcher, s: &Stream, hints: &Hints) -> Result<()> {
     let package = Package {

@@ -114,7 +114,8 @@
               "url": "https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-changelog/",
               "format": "html",
               "selector": "main",
-              "boundary": "Atlas CLI (?P<version>\\d+\\.\\d+\\.\\d+)"
+              "boundary": "Atlas CLI (?P<version>\\d+\\.\\d+\\.\\d+)",
+              "date_formats": ["Released %d %B %Y"]
             }
           ]
         }
@@ -1798,6 +1799,7 @@
           "basis": "version",
           "scheme": "semver",
           "channel": "stable",
+          "npm_date_package": "vercel",
           "caveats": "",
           "sources": [
             {

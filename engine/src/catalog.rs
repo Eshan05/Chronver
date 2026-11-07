@@ -166,6 +166,11 @@ fn validate(catalog: Catalog) -> Result<Catalog> {
             if stream.id.is_empty() || !streams.insert(&stream.id) || stream.sources.is_empty() {
                 return Err(Error::Config(format!("invalid streams for {}", p.id)));
             }
+            if stream.npm_date_package.as_deref().is_some_and(|name| {
+                stream.basis != Basis::Version || !crate::dependencies::package_name(name)
+            }) {
+                return Err(Error::Config(format!("invalid npm date package for {}/{}", p.id, stream.id)));
+            }
             for source in &stream.sources {
                 match source {
                     Source::InstalledDocument {
