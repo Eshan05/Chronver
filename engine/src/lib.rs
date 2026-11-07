@@ -9,6 +9,7 @@ pub mod catalog;
 pub mod batch;
 pub mod dependencies;
 pub mod engine;
+pub mod extension_updates;
 pub mod extensions;
 mod github_dates;
 pub mod http;

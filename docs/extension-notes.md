@@ -55,11 +55,28 @@ labeled release-note links, not authored changelog prose. Empty documents
 are failures, not authored notes. At most 200 parsed sections are retained;
 the existing reader's Show more control handles display pagination.
 
-These are notes, **not update candidates**. No extension is downloaded, installed
-or upgraded. Editor-engine compatibility is not checked, and reading a changelog
-does not infer that a release can be installed. Publication channels identify the
-artifact; a single changelog can describe several channels. Reports always retain
-partial/unverified coverage rather than claiming all intervening notes exist.
+These are notes, **not update candidates**. Reading a changelog does not infer
+that a release can be installed. Publication channels identify the artifact; a
+single changelog can describe several channels. Reports retain partial/unverified
+coverage rather than claiming all intervening notes exist.
+
+## Update Checks
+
+**Check updates** in Extensions checks the current editor and profile filters
+without opening an editor. It reads local product metadata and registered
+extension records, and batches exact extension IDs against each editor's own
+gallery (Visual Studio Marketplace for VS Code and Insiders, Cursor's gallery
+for Cursor). It compares edition, platform, pre-release preference and the
+installed version. Only metadata is requested; no extension is downloaded or
+installed. The check is not part of startup or the notes reader.
+
+An update marker means Chronver found a newer gallery release compatible with
+the recorded engine and platform. The editor may still apply private policies,
+allowlists or cooldowns. Unrecognized product galleries, private extensions
+and insufficient metadata remain unverified; a missing result is not proof of
+being current.
+Gallery responses use the HTTP cache, but stale or offline responses do not
+confirm an update. The editor retains control of actual installation.
 
 ## Cache And UI
 

@@ -141,6 +141,34 @@ foreach($profile in $registered) {
     $icon=if($profile.icon -is [string] -and $profile.icon -cmatch '^[a-z0-9-]{1,96}$'){$profile.icon}else{$null}
     $profiles+=@{id=$root;name=[string]$profile.name;root=$root;isDefault=$false;icon=$icon}
 }
+if($editorUpdatesOnly) {
+    if(-not $exe) {throw 'Editor executable metadata unavailable'}
+    $stream=[IO.File]::Open($exe,[IO.FileMode]::Open,[IO.FileAccess]::Read,([IO.FileShare]::ReadWrite -bor [IO.FileShare]::Delete))
+    $reader=[IO.BinaryReader]::new($stream)
+    try {
+        if($stream.Length -lt 64 -or $reader.ReadUInt16() -ne 0x5a4d) {throw 'Editor executable is not a Windows PE'}
+        $stream.Position=0x3c
+        $pe=$reader.ReadUInt32()
+        if($pe -lt 64 -or $pe -gt 1MB -or $stream.Length -lt $pe+6) {throw 'Editor PE header unavailable'}
+        $stream.Position=$pe
+        if($reader.ReadUInt32() -ne 0x4550) {throw 'Invalid editor PE header'}
+        $platform=switch($reader.ReadUInt16()) {
+            0x8664 {'win32-x64'}
+            0xaa64 {'win32-arm64'}
+            0x14c {'win32-ia32'}
+            default {throw 'Unsupported editor platform'}
+        }
+    } finally {$reader.Dispose()}
+    $defaultRegistry=if(Test-Path -LiteralPath $portable) {Join-Path $portable 'extensions/extensions.json'}
+        else {Join-Path (Join-Path $env:USERPROFILE $editorExtensions) 'extensions/extensions.json'}
+    $registries=@(foreach($profile in $profiles) {
+        $registry=if($profile.isDefault){$defaultRegistry}else{Join-Path $profile.root 'extensions.json'}
+        @{id=$profile.id;path=$registry}
+    })
+    $version=if($editorExtensions -eq '.cursor') {$product.vscodeVersion} else {$product.version}
+    @{version=$version;platform=$platform;date=$product.date;gallery=$product.extensionsGallery.serviceUrl;registries=$registries}|ConvertTo-Json -Depth 5 -Compress
+    return
+}
 $results=@(foreach($profile in $profiles) {
     $arguments=@('--list-extensions','--show-versions',('--user-data-dir='+$userData))
     if(-not $profile.isDefault) { $arguments+=@('--profile='+$profile.name) }

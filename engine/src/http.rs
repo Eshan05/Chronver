@@ -258,6 +258,27 @@ impl<T: Transport> Fetcher for HttpClient<T> {
     }
 }
 impl<T: Transport> HttpClient<T> {
+    pub(crate) fn extension_versions(
+        &self,
+        service: &str,
+        ids: &[&str],
+        cursor_proxy: bool,
+    ) -> Result<Document> {
+        let mut criteria: Vec<_> = ids
+            .iter()
+            .map(|id| serde_json::json!({"filterType":7,"value":id}))
+            .collect();
+        if !cursor_proxy {
+            criteria.push(serde_json::json!({"filterType":8,"value":"Microsoft.VisualStudio.Code"}));
+        }
+        // Cursor only returned version properties with file metadata requested.
+        // Neither request downloads or follows asset URLs.
+        let flags = if cursor_proxy { 147 } else { 17 };
+        let body = serde_json::json!({"filters":[{"criteria":criteria,"pageNumber":1,
+            "pageSize":ids.len()}],"flags":flags});
+        self.request(&format!("{service}/extensionquery"), Some(body.to_string()), false)
+    }
+
     pub fn marketplace_query(&self, id: &str) -> Result<Document> {
         let body = serde_json::json!({"filters":[{"criteria":[{"filterType":7,"value":id},{"filterType":8,"value":"Microsoft.VisualStudio.Code"}],"pageNumber":1,"pageSize":1}],"flags":147});
         self.request(

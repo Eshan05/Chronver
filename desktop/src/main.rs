@@ -101,6 +101,7 @@ fn main() {
             s.note_cache.read.set_waker(waker.clone());
             s.note_cache.write.set_waker(waker.clone());
             s.note_prefetch.set_waker(waker.clone());
+            s.extensions.set_update_waker(waker.clone());
             for work in &s.inventory.discovery { work.set_waker(waker.clone()); }
             if !headless() {
                 s.ai.model_file_enabled = true;
@@ -118,7 +119,7 @@ fn main() {
             }
         }),
         poll: Some(|s: &mut State, _, tx| {
-            if s.backdrop.sync(s.dark) | s.poll_engine() | s.poll_history() | s.poll_inventory() | s.poll_inventory_export() | s.poll_discovery() | s.poll_icons() | s.poll_custom_icons() | s.poll_package_icons() | s.poll_remote_icons() | s.poll_source_discovery() | s.poll_packages() | s.poll_watchlist() | s.poll_activity() | s.poll_note_cache() | s.poll_note_prefetch() | s.ai.poll() {
+            if s.backdrop.sync(s.dark) | s.poll_engine() | s.poll_history() | s.poll_inventory() | s.poll_inventory_export() | s.poll_discovery() | s.poll_icons() | s.poll_custom_icons() | s.poll_package_icons() | s.poll_remote_icons() | s.poll_source_discovery() | s.poll_packages() | s.poll_watchlist() | s.poll_activity() | s.poll_note_cache() | s.poll_note_prefetch() | s.poll_extension_updates() | s.ai.poll() {
                 command::refresh(s);
                 tx.instant();
                 true

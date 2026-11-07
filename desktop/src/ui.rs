@@ -247,6 +247,12 @@ fn package_row(s: &State, i: usize, k: &Kit) -> El {
                         .label("A check failed")
                         .help("A check failed; view details in Info")
                 }))
+                .children((p.extension.is_some() && r.members.iter().any(|&i| crate::extension_ui::has_update(s, &s.catalog.packages[i]))).then(|| {
+                    icon(&sidebar_info::UPDATE, 14.).color(k.c.success.fg)
+                        .key("sidebar-extension-update")
+                        .label("Extension gallery update available")
+                        .help("A compatible gallery update was found for an editor profile.")
+                }))
                 .children((info.unread > 0).then(|| {
                     row()
                         .h(18.0)
@@ -648,6 +654,7 @@ fn reader_header(s: &State, p: &Package, k: &Kit, layers: &mut Vec<El>) -> El {
                         .help(crate::extension_ui::profile_name(p)),
                 )
         }))
+        .children(crate::extension_ui::update_label(s, p, k))
         .children(p.target.as_ref().map(|target| {
             row()
                 .gap(10.)

@@ -8,12 +8,27 @@ use crate::{
 };
 use releasescout_engine::{
     Channel,
+    extension_updates::{self, Installation, Status},
     extensions::{self, Mode},
     http::{CacheOptions, HttpClient},
-    inventory::Manager,
+    inventory::{Manager, ProcessRunner},
 };
-use rune::{El, col, icon, row, text};
-use rune_kit::{Kit, SegmentedControl, glyphs};
+use rune::{El, Latest, col, icon, row, text};
+use rune_kit::{Button, ButtonVariant, Kit, SegmentedControl, glyphs};
+use std::collections::HashMap;
+
+static REFRESH: rune::Icon = rune::Icon {
+    name: "check-extension-updates",
+    view: 24.,
+    body: include_str!("../assets/status/refresh-cw.svg"),
+};
+
+struct Update {
+    key: String,
+    editor: Manager,
+    installation: Installation,
+    status: Status,
+}
 
 #[derive(Default)]
 pub struct Filter {
@@ -21,6 +36,59 @@ pub struct Filter {
     pub profile: Option<String>,
     editor_open: bool,
     profile_open: bool,
+    updates: HashMap<String, Update>,
+    update_work: Latest<Vec<Update>>,
+}
+
+impl Update {
+    fn matches(&self, p: &Package) -> bool {
+        p.provider == Some(self.editor)
+            && p.installed.as_deref() == Some(&self.installation.version)
+            && p.extension.as_ref().is_some_and(|e| {
+                e.id == self.installation.id
+                    && e.profile_id.as_deref() == Some(&self.installation.profile)
+                    && e.root == self.installation.root
+            })
+    }
+}
+
+fn update_status<'a>(s: &'a State, p: &Package) -> Option<&'a Status> {
+    p.extension.as_ref()?;
+    s.extensions
+        .updates
+        .get(&p.id)
+        .filter(|update| update.matches(p))
+        .map(|u| &u.status)
+}
+
+pub fn has_update(s: &State, p: &Package) -> bool {
+    matches!(update_status(s, p), Some(Status::Available(_)))
+}
+
+pub fn update_label(s: &State, p: &Package, k: &Kit) -> Option<El> {
+    let (label, detail, color) = match update_status(s, p)? {
+        Status::Available(v) => (
+            format!("Gallery update: {v}"),
+            "A newer compatible release was found in this editor's gallery. Editor policies may still apply.",
+            k.c.success.fg,
+        ),
+        Status::NoNewerCompatibleRelease => (
+            "No newer compatible release".into(),
+            "No newer compatible version was found in the last gallery check.",
+            k.c.text_muted,
+        ),
+        Status::Unverified(reason) => ("Update unverified".into(), *reason, k.c.text_muted),
+    };
+    Some(
+        text(label)
+            .font(k.ty.text_xsmall)
+            .color(color)
+            .help(detail)
+            .max_w(280.)
+            .min_w(0.)
+            .truncate()
+            .key("extension-update-status"),
+    )
 }
 pub fn profile_key(p: &Package) -> Option<String> {
     let e = p.extension.as_ref()?;
@@ -55,6 +123,10 @@ pub fn membership_label(p: &Package) -> String {
     )
 }
 impl Filter {
+    pub fn set_update_waker(&self, waker: rune::Waker) {
+        self.update_work.set_waker(waker);
+    }
+
     pub fn matches(&self, p: &Package) -> bool {
         self.editor.is_none_or(|m| p.provider == Some(m))
             && self
@@ -343,39 +415,164 @@ pub fn filters(s: &State, k: &Kit, layers: &mut Vec<El>) -> El {
         },
     }
     .build(k, layers);
+    let checking = s.extensions.update_work.is_pending();
+    let mut available = 0;
+    let mut unverified = 0;
+    let mut checked = 0;
+    for p in s
+        .catalog
+        .packages
+        .iter()
+        .filter(|p| p.extension.is_some() && s.extensions.matches(p))
+    {
+        if let Some(status) = update_status(s, p) {
+            checked += 1;
+            available += usize::from(matches!(status, Status::Available(_)));
+            unverified += usize::from(matches!(status, Status::Unverified(_)));
+        }
+    }
+    let summary = if checking {
+        Some("Checking...".to_owned())
+    } else if checked > 0 {
+        Some(if unverified > 0 {
+            format!("{available} updates / {unverified} unverified")
+        } else {
+            format!("{available} updates")
+        })
+    } else {
+        None
+    };
     col()
         .w_full()
         .gap(6.)
         .child(editor)
         .child(profile)
+        .child(
+            row().min_h(30.).gap(6.).center_y()
+                .child(Button::new("Check updates")
+                    .icon(&REFRESH)
+                    .variant(ButtonVariant::Outline)
+                    .disabled(checking || items.is_empty())
+                    .on_press(|s: &mut State| s.start_extension_updates())
+                    .build(k)
+                    .help("Check this editor and profile selection without opening an editor or installing anything")
+                    .key("extension-check-updates"))
+                .children(summary.map(|label| text(&label).color(k.c.text_muted).font(k.ty.text_xsmall)
+                    .grow(1.).min_w(0.).truncate().help_when_truncated(label))),
+        )
         .key("extension-filters")
 }
 
 pub fn controls(s: &State, k: &Kit, layers: &mut Vec<El>) -> El {
     let p = s.selected().unwrap();
     let q = &s.live.sessions[&p.id];
-    crate::reader_controls::area("extension-controls")
-        .child(
-            row()
-                .w_full()
-                .flex_wrap()
-                .gap(8.0)
-                .center_y()
-                .child(
-                    SegmentedControl::new(
-                        &["Installed", "Published"],
-                        Some(usize::from(q.extension_published)),
-                    )
-                    .width(Some(184.0))
-                    .label("Extension notes source")
-                    .on_pick(|s: &mut State, i, _| s.engine_query().extension_published = i == 1)
-                    .build(k)
-                    .key("extension-source"),
+    crate::reader_controls::area("extension-controls").child(
+        row()
+            .w_full()
+            .flex_wrap()
+            .gap(8.0)
+            .center_y()
+            .child(
+                SegmentedControl::new(
+                    &["Installed", "Published"],
+                    Some(usize::from(q.extension_published)),
                 )
-                .child(crate::reader_controls::actions(s,k,layers,q.extension_published)),
-        )
+                .width(Some(184.0))
+                .label("Extension notes source")
+                .on_pick(|s: &mut State, i, _| s.engine_query().extension_published = i == 1)
+                .build(k)
+                .key("extension-source"),
+            )
+            .child(crate::reader_controls::actions(
+                s,
+                k,
+                layers,
+                q.extension_published,
+            )),
+    )
 }
 impl State {
+    fn start_extension_updates(&mut self) {
+        if self.extensions.update_work.is_pending() {
+            return;
+        }
+        let targets: Vec<_> = self
+            .catalog
+            .packages
+            .iter()
+            .filter(|p| p.detected && self.extensions.matches(p))
+            .filter_map(|p| {
+                let info = p.extension.as_ref()?;
+                Some((
+                    p.id.clone(),
+                    p.provider?,
+                    Installation {
+                        id: info.id.clone(),
+                        version: p.installed.clone()?,
+                        profile: info.profile_id.clone()?,
+                        root: info.root.clone(),
+                    },
+                ))
+            })
+            .collect();
+        if targets.is_empty() {
+            return;
+        }
+        self.extensions.update_work.request((), move |_| {
+            let client = HttpClient::new(CacheOptions {
+                directory: cache_directory(),
+                ..Default::default()
+            });
+            let runner = ProcessRunner {
+                timeout: std::time::Duration::from_secs(10),
+                ..Default::default()
+            };
+            let mut results = Vec::new();
+            for editor in Manager::EDITORS {
+                let (keys, installs): (Vec<_>, Vec<_>) = targets
+                    .iter()
+                    .filter(|(_, provider, _)| *provider == editor)
+                    .map(|(key, _, install)| (key.clone(), install.clone()))
+                    .unzip();
+                if installs.is_empty() {
+                    continue;
+                }
+                let statuses = match client.as_ref() {
+                    Ok(client) => extension_updates::check(editor, &installs, &runner, client)
+                        .unwrap_or_else(|_| {
+                            vec![
+                                Status::Unverified("Could not verify the editor or its gallery");
+                                installs.len()
+                            ]
+                        }),
+                    Err(_) => vec![
+                        Status::Unverified("Could not connect to the editor gallery");
+                        installs.len()
+                    ],
+                };
+                results.extend(keys.into_iter().zip(installs).zip(statuses).map(
+                    |((key, installation), status)| Update {
+                        key,
+                        editor,
+                        installation,
+                        status,
+                    },
+                ));
+            }
+            results
+        });
+    }
+
+    pub fn poll_extension_updates(&mut self) -> bool {
+        let Some(results) = self.extensions.update_work.take() else {
+            return false;
+        };
+        self.extensions
+            .updates
+            .extend(results.into_iter().map(|u| (u.key.clone(), u)));
+        true
+    }
+
     pub fn normalize_extension_filter(&mut self) {
         if self.extensions.profile.as_ref().is_some_and(|key| {
             !self.catalog.packages.iter().any(|p| {
@@ -502,6 +699,53 @@ pub fn menu_scene(s: &mut State, editor: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn gallery_result_is_visible_only_for_its_captured_installation() {
+        let mut s = State::demo();
+        scene(&mut s);
+        let p = s.selected().unwrap();
+        let info = p.extension.as_ref().unwrap();
+        let key = p.id.clone();
+        let record = Update {
+            key: key.clone(),
+            editor: p.provider.unwrap(),
+            installation: Installation {
+                id: info.id.clone(),
+                version: p.installed.clone().unwrap(),
+                profile: info.profile_id.clone().unwrap(),
+                root: info.root.clone(),
+            },
+            status: Status::Available("9.0.0".into()),
+        };
+        s.extensions.updates.insert(key.clone(), record);
+        let mut rt = rune::Runtime::with_text(
+            s,
+            crate::ui::view,
+            (1024., 640.),
+            rune::Env {
+                system_dark: false,
+                scale: 1.,
+            },
+            rune::text::TextSystem::new(crate::fonts::FACES, crate::fonts::FAMILIES),
+        );
+        rt.frame(0.);
+        assert!(rt.find("extension-check-updates").is_some());
+        assert!(rt.find("sidebar-extension-update").is_some());
+        assert!(rt.find("extension-update-status").is_some());
+        assert!(!rt.state.extensions.update_work.is_pending());
+        rt.update(|s, _| {
+            s.catalog
+                .packages
+                .iter_mut()
+                .find(|p| p.id == key)
+                .unwrap()
+                .installed = Some("9.0.0".into());
+        });
+        rt.frame(1.);
+        assert!(rt.find("extension-update-status").is_none());
+        assert!(rt.find("sidebar-extension-update").is_none());
+    }
+
     #[test]
     fn rich_option_counts_are_distinct_extensions_not_membership_totals() {
         let mut s = State::new();

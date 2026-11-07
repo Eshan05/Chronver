@@ -913,7 +913,7 @@ pub fn parse(manager: Manager, updates: bool, input: &str) -> Result<Scan> {
             }
             scan.update_check_succeeded = false;
             if !profiles.is_empty() {
-                scan.warnings.push("Registered local editor profiles are enumerated, including inherited extensions. Remote hosts are not scanned. Marketplace candidates are not yet checked (compatibility and prerelease channel must be preserved).".into());
+                scan.warnings.push("Registered local editor profiles are enumerated, including inherited extensions. Remote hosts are not scanned. Gallery update checks are separate from installed inventory.".into());
             }
         }
         Manager::Bun => {
