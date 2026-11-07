@@ -9,6 +9,7 @@ use std::sync::{
 
 pub struct Inventory {
     pub workspace: crate::inventory_workspace::Workspace,
+    pub projection: crate::inventory_view::ProjectionCache,
     pub discovery: Vec<Latest<std::result::Result<Scan, String>>>,
     pub snapshot: Latest<std::result::Result<(), String>>,
     pub persist: bool,
@@ -34,6 +35,7 @@ impl Default for Inventory {
     fn default() -> Self {
         Self {
             workspace: Default::default(),
+            projection: Default::default(),
             discovery: Manager::ALL.iter().map(|_| Latest::default()).collect(),
             snapshot: Latest::default(),
             persist: false,

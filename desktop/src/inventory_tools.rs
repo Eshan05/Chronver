@@ -1,5 +1,5 @@
 use crate::{
-    inventory_workspace::{self as workspace, Column, Record},
+    inventory_workspace::{self as workspace, Column},
     model::State,
     theme,
 };
@@ -9,32 +9,27 @@ use rune_kit::{
     SegmentedControl, glyphs, popover, scrim, scroll_bar,
 };
 
-pub fn bar(s: &State, rows: &[Record<'_>], k: &Kit, layers: &mut Vec<El>) -> El {
-    let selected = workspace::selected(s);
-    let visible = rows
-        .iter()
-        .filter(|r| s.inventory.workspace.selected.contains(&r.key))
-        .count();
-    let hidden = selected.len() - visible;
-    let ids = selected
-        .iter()
-        .map(|r| r.package.id.as_str())
-        .collect::<Vec<_>>()
-        .join("\n");
+pub fn bar(s: &State, matched: usize, visible_selected: usize, k: &Kit, layers: &mut Vec<El>) -> El {
+    let selected = if s.inventory.workspace.selected.is_empty() {
+        0
+    } else {
+        workspace::selected(s).len()
+    };
+    let hidden = selected.saturating_sub(visible_selected);
     let mut bar = row().w_full().gap(6.).center_y().flex_wrap().child(
-        text(if selected.is_empty() {
-            format!("{} observations", rows.len())
+        text(if selected == 0 {
+            format!("{matched} observations")
         } else if hidden > 0 {
-            format!("{} selected / {hidden} hidden", selected.len())
+            format!("{selected} selected / {hidden} hidden")
         } else {
-            format!("{} selected", selected.len())
+            format!("{selected} selected")
         })
         .font(k.ty.text_xsmall)
         .color(k.c.text_muted)
         .grow(1.)
         .min_w(0.),
     );
-    if !selected.is_empty() {
+    if selected > 0 {
         bar = bar.child(
             IconButton::new(&glyphs::CLOSE)
                 .variant(IconButtonVariant::Ghost)
@@ -55,9 +50,15 @@ pub fn bar(s: &State, rows: &[Record<'_>], k: &Kit, layers: &mut Vec<El>) -> El 
                 .variant(IconButtonVariant::Ghost)
                 .label("Copy selected package IDs")
                 .help("Copy selected package IDs")
-                .disabled(selected.is_empty())
-                .on_press_tx(move |s: &mut State, tx| {
-                    tx.copy(ids.clone());
+                .disabled(selected == 0)
+                .on_press_tx(|s: &mut State, tx| {
+                    let selected = workspace::selected(s);
+                    let ids = selected
+                        .iter()
+                        .map(|r| r.package.id.as_str())
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    tx.copy(ids);
                     s.status = "Selected package IDs copied".into();
                 })
                 .build(k)
@@ -68,7 +69,7 @@ pub fn bar(s: &State, rows: &[Record<'_>], k: &Kit, layers: &mut Vec<El>) -> El 
             Button::new("Review upgrades")
                 .variant(ButtonVariant::Ghost)
                 .icon(&crate::sidebar_info::UPDATE)
-                .disabled(selected.is_empty())
+                .disabled(selected == 0)
                 .on_press(|s: &mut State| s.review_inventory_selection())
                 .build(k)
                 .h(28.)
@@ -78,13 +79,13 @@ pub fn bar(s: &State, rows: &[Record<'_>], k: &Kit, layers: &mut Vec<El>) -> El 
             IconButton::new(&crate::sidebar_info::DOWNLOAD)
                 .variant(IconButtonVariant::Ghost)
                 .label("Export inventory")
-                .help(if selected.is_empty() {
+                .help(if selected == 0 {
                     "Export matching observations as JSON"
                 } else {
                     "Export all selected observations as JSON, including hidden selections"
                 })
                 .disabled(
-                    s.inventory.workspace.export_busy || (selected.is_empty() && rows.is_empty()),
+                    s.inventory.workspace.export_busy || (selected == 0 && matched == 0),
                 )
                 .on_press_tx(|s: &mut State, tx| s.export_inventory(tx))
                 .build(k)

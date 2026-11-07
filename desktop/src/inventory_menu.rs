@@ -179,10 +179,11 @@ pub fn trigger(target: Target, trigger: El, k: &Kit) -> El {
         })
 }
 
-pub fn view(s: &State, rows: &[Record<'_>], k: &Kit, layers: &mut Vec<El>) {
+pub fn view(s: &State, k: &Kit, layers: &mut Vec<El>) {
     let Some(open) = &s.inventory.workspace.context else {
         return;
     };
+    let rows = workspace::filtered(s);
     let target = &open.target;
     let mut menu = context_menu(target.menu_key(), el(), Some(open.point))
         .standard()

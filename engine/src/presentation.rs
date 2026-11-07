@@ -192,8 +192,10 @@ pub fn component_reason(p: &InstalledPackage) -> Option<String> {
 }
 pub fn observations(scans: &[Scan]) -> Vec<Observation> {
     let bindings = matching::bindings();
-    let aliases: Vec<Alias> = serde_json::from_str(include_str!("../data/inventory-groups.json"))
-        .expect("bundled product aliases");
+    static ALIASES: std::sync::LazyLock<Vec<Alias>> = std::sync::LazyLock::new(|| {
+        serde_json::from_str(include_str!("../data/inventory-groups.json"))
+            .expect("bundled product aliases")
+    });
     let mut result = vec![];
     for (si, scan) in scans.iter().enumerate() {
         for (pi, p) in scan.packages.iter().enumerate() {
@@ -232,8 +234,8 @@ pub fn observations(scans: &[Scan]) -> Vec<Observation> {
                 target = next;
             }
             let canonical = &scan.packages[target];
-            let binding = matching::resolve(canonical, &bindings);
-            let alias = aliases.iter().find(|a| {
+            let binding = matching::resolve(canonical, bindings);
+            let alias = ALIASES.iter().find(|a| {
                 a.manager == canonical.manager.id()
                     && a.id == canonical.id
                     && a.source.as_ref().is_none_or(|s| s == &canonical.source)

@@ -4,7 +4,7 @@ use crate::{
     inventory::{InstalledPackage, Scan},
 };
 use serde::Deserialize;
-use std::{io::Write, path::Path};
+use std::{io::Write, path::Path, sync::LazyLock};
 
 #[derive(Debug, Deserialize)]
 pub struct Binding {
@@ -22,20 +22,23 @@ pub struct Binding {
     #[serde(skip)]
     matcher: Option<regex::Regex>,
 }
-pub fn bindings() -> Vec<Binding> {
-    let mut bindings: Vec<Binding> =
-        serde_json::from_str(include_str!("../data/inventory-bindings.json"))
-            .expect("bundled inventory bindings");
-    for binding in &mut bindings {
-        binding.matcher = binding
-            .name_pattern
-            .as_ref()
-            .or(binding.id_pattern.as_ref())
-            .map(|pattern| {
-                regex::Regex::new(&format!("^(?:{pattern})$")).expect("bundled identity pattern")
-            });
-    }
-    bindings
+pub fn bindings() -> &'static [Binding] {
+    static BINDINGS: LazyLock<Vec<Binding>> = LazyLock::new(|| {
+        let mut bindings: Vec<Binding> =
+            serde_json::from_str(include_str!("../data/inventory-bindings.json"))
+                .expect("bundled inventory bindings");
+        for binding in &mut bindings {
+            binding.matcher = binding
+                .name_pattern
+                .as_ref()
+                .or(binding.id_pattern.as_ref())
+                .map(|pattern| {
+                    regex::Regex::new(&format!("^(?:{pattern})$")).expect("bundled identity pattern")
+                });
+        }
+        bindings
+    });
+    &BINDINGS
 }
 pub fn resolve<'a>(p: &InstalledPackage, bindings: &'a [Binding]) -> Option<&'a Binding> {
     let mut matches = bindings.iter().filter(|b| {
@@ -90,7 +93,7 @@ pub fn resolve<'a>(p: &InstalledPackage, bindings: &'a [Binding]) -> Option<&'a 
 pub fn validate(catalog: &Catalog) -> Result<()> {
     let all = bindings();
     let mut seen = std::collections::HashSet::new();
-    for b in &all {
+    for b in all {
         if !seen.insert((
             &b.manager,
             &b.id,

@@ -62,7 +62,7 @@ fn discovery_managers(
     force: bool,
     now: DateTime<Utc>,
 ) -> Vec<Manager> {
-    Manager::ALL
+    let mut managers: Vec<_> = Manager::ALL
         .into_iter()
         .filter(|&manager| {
             force
@@ -73,7 +73,19 @@ fn discovery_managers(
                         inventory_refresh::reusable_snapshot(manager, scan, now)
                     }))
         })
-        .collect()
+        .collect();
+    if !force {
+        // Put the slow Windows providers and the broad local scan in the first
+        // wave without increasing concurrency or changing manual update checks.
+        managers.sort_by_key(|manager| match manager {
+            Manager::Winget => 0,
+            Manager::Scoop => 1,
+            Manager::Store => 2,
+            Manager::Local => 3,
+            _ => 4,
+        });
+    }
+    managers
 }
 
 impl State {
@@ -132,8 +144,10 @@ impl State {
         });
         let needed = discovery_managers(&self.inventory.scans, &attempts, force, now);
         let mut scheduled = false;
-        for (work, manager) in self.inventory.discovery.iter().zip(Manager::ALL) {
-            if !work.is_pending() && needed.contains(&manager) {
+        for manager in needed {
+            let index = Manager::ALL.iter().position(|m| *m == manager).unwrap();
+            let work = &self.inventory.discovery[index];
+            if !work.is_pending() {
                 attempts.insert(manager.id().into(), now);
                 scheduled = true;
                 let previous = self
@@ -192,15 +206,17 @@ impl State {
             .filter_map(|(work, m)| work.take().map(|r| (m, r)))
             .collect();
         let changed = !results.is_empty();
+        let mut scans = Vec::new();
         for (manager, result) in results {
             match result {
-                Ok(scan) => self.accept_scan(scan),
+                Ok(scan) => scans.push(scan),
                 Err(error) => self
                     .inventory
                     .discovery_errors
                     .push(format!("{}: {error}", manager.id())),
             }
         }
+        self.accept_scans(scans);
         if changed {
             let pending = self
                 .inventory
@@ -234,7 +250,34 @@ impl State {
         changed || saved.is_some()
     }
     pub fn accept_scan(&mut self, scan: Scan) {
+        self.accept_scans([scan]);
+    }
+
+    fn accept_scans(&mut self, scans: impl IntoIterator<Item = Scan>) {
+        let mut scans = scans.into_iter().peekable();
+        if scans.peek().is_none() {
+            return;
+        }
         self.inventory.workspace.context = None;
+        for scan in scans {
+            self.merge_inventory_scan(scan);
+        }
+        if !self.inventory.workspace.selected.is_empty() {
+            let keys: HashSet<_> = crate::inventory_workspace::scans(self)
+                .into_iter()
+                .flat_map(|scan| scan.packages.iter().map(crate::sidebar_info::check_key))
+                .collect();
+            self.inventory
+                .workspace
+                .selected
+                .retain(|key| keys.contains(key));
+        }
+        self.rebuild_detected();
+        self.status = self.inventory_summary();
+        self.inventory.snapshot_dirty = true;
+    }
+
+    fn merge_inventory_scan(&mut self, scan: Scan) {
         let error_prefix = format!("{}: ", scan.manager.id());
         self.inventory
             .discovery_errors
@@ -255,17 +298,6 @@ impl State {
         }
         self.inventory.scans.retain(|s| s.manager != scan.manager);
         self.inventory.scans.push(scan);
-        let keys: std::collections::BTreeSet<_> = crate::inventory_workspace::scans(self)
-            .into_iter()
-            .flat_map(|scan| scan.packages.iter().map(crate::sidebar_info::check_key))
-            .collect();
-        self.inventory
-            .workspace
-            .selected
-            .retain(|key| keys.contains(key));
-        self.rebuild_detected();
-        self.status = self.inventory_summary();
-        self.inventory.snapshot_dirty = true;
     }
     pub fn inventory_summary(&self) -> String {
         if self.section == LibrarySection::Packages {
@@ -344,9 +376,14 @@ impl State {
         let bindings = matching::bindings();
         let groups = releasescout_engine::presentation::observations(&self.inventory.scans);
         let mut group_bindings: HashMap<&str, Option<&matching::Binding>> = HashMap::new();
+        let mut peers: HashMap<&str, Vec<_>> = HashMap::new();
+        let mut direct_bindings = Vec::with_capacity(groups.len());
         for g in &groups {
             let record = &self.inventory.scans[g.scan].packages[g.package];
-            if let Some(binding) = matching::resolve(record, &bindings) {
+            peers.entry(&g.group).or_default().push(record);
+            let binding = matching::resolve(record, bindings);
+            direct_bindings.push(binding);
+            if let Some(binding) = binding {
                 group_bindings
                     .entry(&g.group)
                     .and_modify(|current| {
@@ -360,12 +397,12 @@ impl State {
             }
         }
         let mut seen = HashSet::new();
+        let mut presentations = groups.iter().zip(direct_bindings);
         for (si, scan) in self.inventory.scans.iter().enumerate() {
             for (pi, record) in scan.packages.iter().enumerate() {
-                let presentation = groups
-                    .iter()
-                    .find(|g| g.scan == si && g.package == pi)
-                    .unwrap();
+                let (presentation, direct_binding) =
+                    presentations.next().expect("one presentation per observation");
+                debug_assert_eq!((presentation.scan, presentation.package), (si, pi));
                 // Keep separate managers, sources, roots, scopes and installed versions distinct.
                 let mut h = std::collections::hash_map::DefaultHasher::new();
                 (
@@ -388,7 +425,7 @@ impl State {
                 if !seen.insert(id.clone()) {
                     continue;
                 }
-                let binding = matching::resolve(record, &bindings).or_else(|| {
+                let binding = direct_binding.or_else(|| {
                     group_bindings
                         .get(presentation.group.as_str())
                         .copied()
@@ -423,8 +460,7 @@ impl State {
                     let mut hints =
                         releasescout_engine::source_discovery::Hints::from_record(record);
                     hints.references = profile.reference_urls.clone();
-                    for peer in groups.iter().filter(|g| g.group == presentation.group) {
-                        let other = &self.inventory.scans[peer.scan].packages[peer.package];
+                    for &other in &peers[presentation.group.as_str()] {
                         hints.homepage = hints.homepage.or_else(|| other.homepage.clone());
                         hints.release_notes =
                             hints.release_notes.or_else(|| other.release_notes.clone());
@@ -707,6 +743,41 @@ mod tests {
     use super::*;
     use releasescout_engine::inventory::parse;
     use serde_json::json;
+
+    #[test]
+    fn automatic_discovery_prioritizes_windows_providers_but_manual_order_is_unchanged() {
+        let now = Utc::now();
+        let attempts = ScanAttempts::new();
+        let automatic = discovery_managers(&[], &attempts, false, now);
+        assert_eq!(
+            &automatic[..4],
+            &[Manager::Winget, Manager::Scoop, Manager::Store, Manager::Local]
+        );
+        assert!(Manager::ALL.iter().all(|m| automatic.contains(m)));
+        assert_eq!(discovery_managers(&[], &attempts, true, now), Manager::ALL);
+    }
+
+    #[test]
+    fn ready_provider_results_reconcile_once_and_keep_surviving_selections() {
+        let mut s = State::new();
+        let initial = scoop("2.0.0");
+        let key = crate::sidebar_info::check_key(&initial.packages[0]);
+        s.accept_scan(initial.clone());
+        s.inventory.workspace.selected.insert(key.clone());
+        s.inventory.workspace.selected.insert("deleted observation".into());
+        let local = parse(
+            Manager::Local,
+            false,
+            &json!({"installed":[{"Id":"fixture","Name":"Fixture Desktop","Version":"1.0","Scope":"User"}]}).to_string(),
+        ).unwrap();
+        let rev = s.list_revision;
+        s.accept_scans([initial, local]);
+        assert_eq!(s.list_revision, rev.wrapping_add(1));
+        assert_eq!(s.inventory.scans.len(), 2);
+        assert_eq!(s.inventory.workspace.selected, [key].into_iter().collect());
+        assert!(s.inventory.snapshot_dirty);
+    }
+
     #[test]
     fn saved_inventory_is_visible_before_discovery_is_scheduled() {
         let directory = tempfile::tempdir().unwrap();

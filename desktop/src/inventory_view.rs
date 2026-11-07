@@ -17,7 +17,14 @@ use rune_kit::{
     Button, ButtonVariant, Checkbox, IconButton, IconButtonVariant, Kit, SegmentedControl,
     TextInput, glyphs, popover, scroll_bar,
 };
-use std::{borrow::Cow, rc::Rc, sync::atomic::Ordering};
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    collections::BTreeSet,
+    hash::{DefaultHasher, Hash, Hasher},
+    rc::Rc,
+    sync::atomic::Ordering,
+};
 
 static PACKAGE: Icon = Icon {
     name: "inventory-package",
@@ -200,11 +207,7 @@ fn table_row() -> El {
     row().w_full().min_w(0.).gap(8.).center_y()
 }
 
-fn table_header(s: &State, rows: &[Record<'_>], k: &Kit) -> El {
-    let count = rows
-        .iter()
-        .filter(|r| s.inventory.workspace.selected.contains(&r.key))
-        .count();
+fn table_header(s: &State, rows: usize, selected: usize, k: &Kit) -> El {
     let mut header = table_row()
         .key("inventory-table-header")
         .py(7.)
@@ -212,8 +215,8 @@ fn table_header(s: &State, rows: &[Record<'_>], k: &Kit) -> El {
         .sticky_top(0.)
         .border_sides([0., 0., 1., 0.], theme::separator(k))
         .child(
-            Checkbox::new(!rows.is_empty() && count == rows.len())
-                .indeterminate(count > 0 && count < rows.len())
+            Checkbox::new(rows > 0 && selected == rows)
+                .indeterminate(selected > 0 && selected < rows)
                 .label("Select all matching observations")
                 .hide_label()
                 .on_toggle_tx(|s: &mut State, tx| {
@@ -730,7 +733,71 @@ enum TableRow {
     End,
 }
 
-fn virtual_table(s: &State, rows: Vec<Record<'_>>, k: &Kit, width: f32) -> El {
+struct Projection {
+    groups: Vec<workspace::Group>,
+    records: Vec<RecordRef>,
+    entries: Vec<(String, TableRow)>,
+    row_version: u64,
+}
+
+struct ProjectionKey {
+    list_revision: u64,
+    query: String,
+    status: Update,
+    sort: Column,
+    descending: bool,
+    hidden_providers: BTreeSet<String>,
+    hidden_sources: BTreeSet<(String, String)>,
+    collapsed_groups: BTreeSet<String>,
+}
+
+#[derive(Default)]
+pub struct ProjectionCache(RefCell<Option<(ProjectionKey, Rc<Projection>)>>);
+
+impl ProjectionCache {
+    fn get(&self, s: &State) -> Rc<Projection> {
+        let w = &s.inventory.workspace;
+        // Real scans are applied through reconciliation, which advances list_revision.
+        // A standalone scan result can be replaced without reconciliation.
+        if s.inventory.result.as_ref().is_some_and(|scan| {
+            !s.inventory.scans.iter().any(|other| other.manager == scan.manager)
+        }) {
+            return Rc::new(project_rows(s));
+        }
+        let query = s.inventory.filter.text.trim();
+        let mut cache = self.0.borrow_mut();
+        if let Some((key, projection)) = &*cache
+            && key.list_revision == s.list_revision
+            && key.query == query
+            && key.status == s.inventory.status_filter
+            && key.sort == w.sort
+            && key.descending == w.descending
+            && key.hidden_providers == w.hidden_providers
+            && key.hidden_sources == w.hidden_sources
+            && key.collapsed_groups == w.collapsed_groups
+        {
+            return projection.clone();
+        }
+        let projection = Rc::new(project_rows(s));
+        *cache = Some((
+            ProjectionKey {
+                list_revision: s.list_revision,
+                query: query.to_owned(),
+                status: s.inventory.status_filter,
+                sort: w.sort,
+                descending: w.descending,
+                hidden_providers: w.hidden_providers.clone(),
+                hidden_sources: w.hidden_sources.clone(),
+                collapsed_groups: w.collapsed_groups.clone(),
+            },
+            projection.clone(),
+        ));
+        projection
+    }
+}
+
+fn project_rows(s: &State) -> Projection {
+    let rows = workspace::filtered(s);
     let groups = workspace::groups(&rows);
     let mut entries = Vec::new();
     let mut keys = std::collections::HashSet::new();
@@ -757,10 +824,20 @@ fn virtual_table(s: &State, rows: Vec<Record<'_>>, k: &Kit, width: f32) -> El {
     }
     entries.push(("inventory-scroll-end".into(), TableRow::End));
 
-    let records: Vec<_> = rows.into_iter().map(RecordRef::from).collect();
-    let entries = Rc::new(entries);
-    let row_keys = entries.clone();
-    let row_entries = entries.clone();
+    let mut hasher = DefaultHasher::new();
+    entries.hash(&mut hasher);
+    Projection {
+        groups,
+        records: rows.into_iter().map(RecordRef::from).collect(),
+        entries,
+        row_version: hasher.finish(),
+    }
+}
+
+fn virtual_table(s: &State, projection: Rc<Projection>, k: &Kit, width: f32) -> El {
+    let row_keys = projection.clone();
+    let row_count = projection.entries.len();
+    let row_version = projection.row_version;
     let kit = k.clone();
     let destination = range_destination(s).map(str::to_owned);
     col()
@@ -772,23 +849,25 @@ fn virtual_table(s: &State, rows: Vec<Record<'_>>, k: &Kit, width: f32) -> El {
         .px(16.)
         .growth(GrowthSpec::default())
         .virtual_rows(
-            entries.len(),
+            row_count,
             if s.inventory.workspace.compact {
                 32.
             } else {
                 50.
             },
-            move |_: &State, index| Cow::Owned(row_keys[index].0.clone()),
-            move |s: &State, index| match row_entries[index].1 {
+            move |_: &State, index| Cow::Owned(row_keys.entries[index].0.clone()),
+            move |s: &State, index| match projection.entries[index].1 {
                 TableRow::Group(index) => {
-                    let bucket = &groups[index];
-                    let Some(first) = records[bucket.members[0]].resolve(s) else {
+                    let bucket = &projection.groups[index];
+                    let Some(first) = projection.records[bucket.members[0]].resolve(s) else {
                         return el();
                     };
                     let selected = bucket
                         .members
                         .iter()
-                        .filter(|&&i| s.inventory.workspace.selected.contains(&records[i].key))
+                        .filter(|&&i| {
+                            s.inventory.workspace.selected.contains(&projection.records[i].key)
+                        })
                         .count();
                     col()
                         .w_full()
@@ -796,7 +875,7 @@ fn virtual_table(s: &State, rows: Vec<Record<'_>>, k: &Kit, width: f32) -> El {
                         .child(group(s, bucket, &first, selected, &kit))
                 }
                 TableRow::Observation(index, child) => {
-                    records[index].resolve(s).map_or_else(el, |r| {
+                    projection.records[index].resolve(s).map_or_else(el, |r| {
                         col().w_full().role("listitem").child(record(
                             s,
                             &r,
@@ -812,7 +891,7 @@ fn virtual_table(s: &State, rows: Vec<Record<'_>>, k: &Kit, width: f32) -> El {
                     .a11y_hidden(),
             },
         )
-        .virtual_rows_version(entries.as_slice())
+        .virtual_rows_version(row_version)
 }
 
 fn empty(title: &str, glyph: &'static Icon, k: &Kit) -> El {
@@ -1074,7 +1153,17 @@ pub fn view(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> (El, (u
             .key("inventory-notice-details"),
         );
     }
-    let matched = workspace::filtered(s);
+    let projection = state.projection.get(s);
+    let matched_count = projection.records.len();
+    let visible_selected = if state.workspace.selected.is_empty() {
+        0
+    } else {
+        projection
+            .records
+            .iter()
+            .filter(|r| state.workspace.selected.contains(&r.key))
+            .count()
+    };
     header = header
         .child(
             row()
@@ -1115,7 +1204,7 @@ pub fn view(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> (El, (u
                     .key("inventory-status-filter"),
                 ),
         )
-        .child(crate::inventory_tools::bar(s, &matched, k, layers));
+        .child(crate::inventory_tools::bar(s, matched_count, visible_selected, k, layers));
     let min_width = 24.
         + 160.
         + 52.
@@ -1131,11 +1220,10 @@ pub fn view(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> (El, (u
         .layout_with("inventory-scroll-area", |r| r[2])
         .unwrap_or(0.)
         .max(min_width);
-    let column_header = table_header(s, &matched, k).min_w(width).px(16.);
-    crate::inventory_menu::view(s, &matched, k, layers);
+    let column_header = table_header(s, matched_count, visible_selected, k).min_w(width).px(16.);
+    crate::inventory_menu::view(s, k, layers);
     crate::inventory_tools::dialogs(s, k, layers);
-    let matched_count = matched.len();
-    let body = if matched.is_empty() {
+    let body = if matched_count == 0 {
         empty(
             if scans.is_empty() {
                 "No saved inventory"
@@ -1146,7 +1234,7 @@ pub fn view(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> (El, (u
             k,
         )
     } else {
-        virtual_table(s, matched, k, width)
+        virtual_table(s, projection, k, width)
     };
     let view = col()
         .w_full()
@@ -1267,6 +1355,31 @@ pub fn workspace_scene(s: &mut State) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn inventory_projection_reuses_rows_but_tracks_filters_and_scan_changes() {
+        let mut s = State::new();
+        scene(&mut s);
+        let first = s.inventory.projection.get(&s);
+        s.inventory.workspace.selected.insert(first.records[0].key.clone());
+        assert!(Rc::ptr_eq(&first, &s.inventory.projection.get(&s)));
+
+        s.inventory.filter = rune::TextEdit::new("fixture-unknown");
+        let filtered = s.inventory.projection.get(&s);
+        assert_eq!(filtered.records.len(), 1);
+        assert!(!Rc::ptr_eq(&first, &filtered));
+        s.inventory.workspace.hidden_providers.insert(Manager::Scoop.id().into());
+        assert!(s.inventory.projection.get(&s).records.is_empty());
+
+        s.inventory.workspace.hidden_providers.clear();
+        let before_scan = s.inventory.projection.get(&s);
+        let mut scan = s.inventory.selected_scan().unwrap().clone();
+        scan.packages.retain(|p| p.id != "fixture-unknown");
+        s.accept_scan(scan);
+        let after_scan = s.inventory.projection.get(&s);
+        assert!(!Rc::ptr_eq(&before_scan, &after_scan));
+        assert!(after_scan.records.is_empty());
+    }
 
     #[test]
     fn raw_status_requires_a_successful_check_and_comparable_versions() {

@@ -11,6 +11,9 @@ does not invalidate saved data. See [branding](branding.md).
 Native startup loads the last saved inventory for the first frame. Automatic
 scans are scheduled once the window is ready and are limited to one attempt
 per provider per rolling 24 hours.
+Automatic scans queue WinGet, Scoop, Store and Local first without increasing
+the number of workers. Results that are ready together are applied together;
+the app does not wait for slower providers to show completed results.
 Recent installed snapshots count even if the candidate check was incomplete.
 Attempts are recorded separately from results, so an unavailable provider does
 not retry on every launch or erase its last successful inventory. Invalid or
@@ -25,7 +28,9 @@ Scoop still checks its bucket metadata freshness before querying local status.
 
 The Rune app saves successful parsed results under
 `%LOCALAPPDATA%/ReleaseScout/notes`, asynchronously and atomically. Each observation
-has one last-result file, capped at 8 MiB. A failed refresh cannot replace it.
+keeps its latest History and Range results separately, each capped at 8 MiB.
+Previous single-file results remain readable. A failed refresh cannot replace
+either result.
 
 On selection, a matching saved result restores its actual query controls, report,
 provenance and pagination without parsing the downloaded source again. Older
@@ -38,9 +43,10 @@ jittered backoff retries; HTTP rate-limit cooldowns still apply. Manual queries
 and Offline mode take precedence. The activity indicator shows when update notes
 are loading. Activity details count the update ranges ready from a fetch or
 saved result, and any attempts that returned no notes during this session.
-Use Load notes for other entries or Refresh
-to revalidate a source. An uncached selection otherwise has no notes until its first
-successful fetch creates the parsed snapshot.
+In the default cache mode, Load notes for detected software reuses a fresh
+parsed result for the exact selection, if available. Refresh bypasses it to
+revalidate the source. An uncached selection otherwise has no notes until its
+first successful fetch creates the parsed snapshot.
 
 Identity includes the observation, installed/candidate versions, source profile,
 installed metadata and hashed credential scope. The captured request selection,

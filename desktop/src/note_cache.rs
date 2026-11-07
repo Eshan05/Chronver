@@ -1,6 +1,6 @@
 use crate::{live::Query, model::State};
 use chrono::{DateTime, Utc};
-use releasescout_engine::{HistoryCursor, Report};
+use releasescout_engine::{HistoryCursor, HistoryPage, Report};
 use rune::{Latest, TextEdit};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -47,6 +47,15 @@ impl Selection {
         q.extension_published = self.extension_published;
         q.inventory_range = self.inventory_range;
     }
+
+    fn matches_request(&self, other: &Self) -> bool {
+        self.range == other.range
+            && self.component == other.component
+            && self.channel == other.channel
+            && self.extension_published == other.extension_published
+            && (!self.range
+                || (self.from.trim() == other.from.trim() && self.to.trim() == other.to.trim()))
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -87,16 +96,7 @@ impl Context {
 }
 
 pub(crate) fn has_fresh_range(directory: &Path, expected: &Context) -> bool {
-    load(directory, expected).ok().flatten().is_some_and(|entry| {
-        let selection = &entry.context.selection;
-        selection.range
-            && selection.component == expected.selection.component
-            && selection.channel == expected.selection.channel
-            && selection.from.trim() == expected.selection.from.trim()
-            && selection.to.trim() == expected.selection.to.trim()
-            && entry.report.notes.iter().any(|note| note.authored_notes)
-            && entry.fresh(Utc::now())
-    })
+    expected.selection.range && fresh_match(directory, expected).is_some()
 }
 
 pub fn context(s: &State, id: &str) -> Option<Context> {
@@ -167,11 +167,16 @@ impl Entry {
 }
 
 fn cache_path(directory: &Path, context: &Context) -> PathBuf {
-    directory.join(format!("{}.json", crate::activity::hash(&context.id)))
+    let suffix = if context.selection.range { "-range" } else { "-history" };
+    slot_path(directory, context, suffix)
 }
 
-fn load(directory: &Path, expected: &Context) -> Result<Option<Entry>, String> {
-    let file = match fs::File::open(cache_path(directory, expected)) {
+fn slot_path(directory: &Path, context: &Context, suffix: &str) -> PathBuf {
+    directory.join(format!("{}{suffix}.json", crate::activity::hash(&context.id)))
+}
+
+fn load_entry(path: &Path, expected: &Context) -> Result<Option<Entry>, String> {
+    let file = match fs::File::open(path) {
         Ok(file) => file,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(e) => return Err(e.to_string()),
@@ -205,6 +210,77 @@ fn load(directory: &Path, expected: &Context) -> Result<Option<Entry>, String> {
         return Ok(None);
     }
     Ok(Some(entry))
+}
+
+fn load(directory: &Path, expected: &Context) -> Result<Option<Entry>, String> {
+    // The legacy last-result file remains readable; opening a package still shows
+    // its most recent compatible result, regardless of the draft query controls.
+    let mut paths = ["-history", "-range", ""].map(|suffix| {
+        let path = slot_path(directory, expected, suffix);
+        let modified = fs::metadata(&path).and_then(|meta| meta.modified()).ok();
+        (path, modified)
+    });
+    paths.sort_by_key(|(_, modified)| std::cmp::Reverse(*modified));
+    let mut error = None;
+    for (path, _) in paths {
+        match load_entry(&path, expected) {
+            Ok(Some(entry)) => return Ok(Some(entry)),
+            Ok(None) => {}
+            Err(e) => error = Some(e),
+        }
+    }
+    error.map_or(Ok(None), Err)
+}
+
+fn fresh_match(directory: &Path, expected: &Context) -> Option<Entry> {
+    let now = Utc::now();
+    [
+        cache_path(directory, expected),
+        slot_path(directory, expected, ""),
+    ]
+        .iter()
+        .filter_map(|path| load_entry(path, expected).ok().flatten())
+        .find(|entry| {
+            entry.context.selection.matches_request(&expected.selection)
+                && entry.report.notes.iter().any(|note| note.authored_notes)
+                && entry.fresh(now)
+        })
+}
+
+pub(crate) fn cached_page(directory: &Path, expected: &Context) -> Option<HistoryPage> {
+    let mut entry = fresh_match(directory, expected)?;
+    if entry.report.evidence.is_empty() {
+        return None;
+    }
+    mark_cached(&mut entry.report, true);
+    Some(HistoryPage {
+        report: entry.report,
+        next: entry.next,
+    })
+}
+
+pub(crate) fn is_saved(report: &Report) -> bool {
+    !report.evidence.is_empty()
+        && report.evidence.iter().all(|e| {
+            e.cache.starts_with("parsed_cache") || e.cache.starts_with("stale_cache_parsed")
+        })
+}
+
+fn mark_cached(report: &mut Report, fresh: bool) {
+    for e in &mut report.evidence {
+        e.cache = format!(
+            "{} ({})",
+            if fresh { "parsed_cache" } else { "stale_cache_parsed" },
+            e.cache
+        );
+    }
+    if !fresh {
+        report.complete = false;
+        if report.status == "available" {
+            report.status = "partial".into();
+        }
+        report.warnings.push("Saved notes; upstream freshness has not been rechecked".into());
+    }
 }
 
 fn save(directory: &Path, mut entry: Entry) -> Result<(), String> {
@@ -264,6 +340,16 @@ impl Cache {
 }
 
 impl State {
+    pub(crate) fn fresh_note_lookup(&self, id: &str) -> Option<(PathBuf, Context)> {
+        let q = &self.live.sessions[id];
+        if !self.note_cache.enabled || q.cache != 0 {
+            return None;
+        }
+        q.pending_cache
+            .clone()
+            .map(|context| (self.note_cache.directory.clone(), context))
+    }
+
     pub fn capture_note_cache(&mut self, id: &str, append: bool) {
         let captured = if append {
             self.live.sessions[id].report_cache.clone()
@@ -281,7 +367,7 @@ impl State {
         let (Some(context), Some(report)) = (&q.report_cache, &q.report) else {
             return;
         };
-        if report.status == "source_failed" {
+        if report.status == "source_failed" || is_saved(report) {
             return;
         }
         let entry = Entry {
@@ -296,7 +382,7 @@ impl State {
         };
         self.note_cache
             .pending
-            .retain(|e| e.context.id != context.id);
+            .retain(|e| e.context.id != context.id || e.context.selection.range != context.selection.range);
         self.note_cache.pending.push_back(entry);
     }
 
@@ -338,27 +424,7 @@ impl State {
                 };
                 q.pending_feed = entry.feed;
                 q.pending_cache = Some(entry.context);
-                for e in &mut entry.report.evidence {
-                    e.cache = format!(
-                        "{} ({})",
-                        if fresh {
-                            "parsed_cache"
-                        } else {
-                            "stale_cache_parsed"
-                        },
-                        e.cache
-                    );
-                }
-                if !fresh {
-                    entry.report.complete = false;
-                    if entry.report.status == "available" {
-                        entry.report.status = "partial".into();
-                    }
-                    entry
-                        .report
-                        .warnings
-                        .push("Saved notes; upstream freshness has not been rechecked".into());
-                }
+                mark_cached(&mut entry.report, fresh);
                 self.note_cache.restoring = true;
                 self.apply_engine_result(guard.id.clone(), Ok(entry.report));
                 self.live.sessions.get_mut(&guard.id).unwrap().restored = true;
@@ -566,6 +632,59 @@ mod tests {
             std::thread::sleep(std::time::Duration::from_millis(2));
         }
     }
+
+    #[test]
+    fn alternating_history_and_range_reuse_distinct_fresh_results() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut s = state(dir.path());
+        let id = s.selected().unwrap().id.clone();
+        s.live.catalog.packages.iter_mut().find(|p| p.id == id).unwrap()
+            .streams[0].sources.clear();
+        let mut report = s.live.sessions[&id].report.clone().unwrap();
+        report.evidence = vec![releasescout_engine::Evidence {
+            url: "https://example.com/releases".into(),
+            fetched_at: Utc::now().to_rfc3339(),
+            cache: "network".into(),
+        }];
+        for (range, title) in [(false, "Saved history result"), (true, "Saved range result")] {
+            s.engine_query().range = range;
+            s.engine_query().from = TextEdit::new("1.0.0");
+            s.engine_query().to = TextEdit::new("2.2.0");
+            report.notes[0].title = title.into();
+            let context = context(&s, &id).unwrap();
+            save(dir.path(), Entry {
+                revision: REVISION,
+                context,
+                saved_at: Utc::now(),
+                report: report.clone(),
+                next: None,
+                feed: None,
+                caption: String::new(),
+                local_stamp: None,
+            }).unwrap();
+        }
+
+        for (range, title) in [(false, "Saved history result"), (true, "Saved range result")] {
+            s.engine_query().range = range;
+            s.fetch_notes();
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+            while !(s.poll_engine() | s.poll_history()) {
+                assert!(std::time::Instant::now() < deadline);
+                std::thread::sleep(std::time::Duration::from_millis(2));
+            }
+            let q = &s.live.sessions[&id];
+            assert!(q.restored);
+            assert_eq!(q.report.as_ref().unwrap().notes[0].title, title);
+            assert!(s.note_cache.pending.is_empty(), "a cache hit must not renew freshness");
+        }
+        s.engine_query().cache = 1;
+        s.capture_note_feed(&id, false);
+        assert!(s.fresh_note_lookup(&id).is_none(), "Refresh must bypass parsed notes");
+        let mut mismatched = context(&s, &id).unwrap();
+        mismatched.selection.to = "2.3.0".into();
+        assert!(cached_page(dir.path(), &mismatched).is_none());
+    }
+
     #[test]
     fn successful_notes_restore_on_reopen_without_http_or_rewriting_the_snapshot() {
         let dir = tempfile::tempdir().unwrap();

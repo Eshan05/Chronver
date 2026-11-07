@@ -292,6 +292,7 @@ impl State {
             github_token: std::env::var("GITHUB_TOKEN").ok(),
             ..Default::default()
         };
+        let saved = self.fresh_note_lookup(&id);
         let catalog = self.live.catalog.clone();
         self.live.active = Some(id.clone());
         let q = self.live.sessions.get_mut(&id).unwrap();
@@ -309,6 +310,11 @@ impl State {
         p.releases.clear();
         p.sample_notes = false;
         self.live.work.request(id, move |id| {
+            if let Some((directory, context)) = saved
+                && let Some(page) = crate::note_cache::cached_page(&directory, &context)
+            {
+                return (id, Ok(page.report));
+            }
             let result = HttpClient::new(options)
                 .and_then(|fetcher| {
                     Engine { catalog, fetcher }.notes(&id, Some(&component), selection, false)
@@ -361,6 +367,11 @@ impl State {
             github_token: std::env::var("GITHUB_TOKEN").ok(),
             ..Default::default()
         };
+        let saved = if append {
+            None
+        } else {
+            self.fresh_note_lookup(&id)
+        };
         let catalog = self.live.catalog.clone();
         self.live.work.cancel();
         self.live.active = Some(id.clone());
@@ -381,6 +392,11 @@ impl State {
             p.sample_notes = false;
         }
         self.live.history.request(id, move |id| {
+            if let Some((directory, context)) = saved
+                && let Some(page) = crate::note_cache::cached_page(&directory, &context)
+            {
+                return (id, Ok(page), false);
+            }
             let result = HttpClient::new(options)
                 .and_then(|fetcher| {
                     Engine { catalog, fetcher }.history(&id, Some(&component), cursor, false)
@@ -473,7 +489,13 @@ impl State {
         let q = self.live.sessions.get_mut(&id).unwrap();
         match result {
             Ok(report) => {
-                q.restored = false;
+                q.restored = crate::note_cache::is_saved(&report);
+                if q.restored
+                    && !q.caption.ends_with("Saved notes")
+                    && !q.caption.ends_with(" / saved notes")
+                {
+                    q.caption.push_str(" / saved notes");
+                }
                 q.error = None;
                 q.report_cache = q.pending_cache.take();
                 q.shown = note_batch_end(report.notes.iter().map(|n|n.body.as_str()), 0, q.shown.max(1));
