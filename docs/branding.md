@@ -32,6 +32,10 @@ cargo build --locked --workspace --bins
 The JSON CLI is `chronver`; the Rune desktop is `chronver-desktop`.
 Historical benchmark records and binaries are not renamed or rewritten.
 
+The desktop title bar and Windows executable icon use the same custom mark
+from `desktop/assets/brand/chronver-mark.svg`. The Windows MSVC build renders
+the required icon sizes and embeds them with the Windows SDK resource compiler.
+
 ## Windows Launching
 
 Run the source build on Windows with `cargo run --locked -p releasescout-rune`.

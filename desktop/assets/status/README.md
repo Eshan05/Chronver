@@ -8,7 +8,7 @@ The sort-direction `arrow-up-narrow-wide` and `arrow-down-wide-narrow` marks are
 
 The sort select's `calendar-days` mark is also from Lucide 0.468.0 (ISC), with the same notice.
 
-The global toolbar's `sun`, `moon`, and `refresh-cw` marks are from Lucide 0.468.0 (ISC), with the same notice.
+The global toolbar's `sun`, `moon`, `refresh-cw`, and `bell` marks are from Lucide 0.468.0 (ISC), with the same notice.
 
 The filter panel's `link-2` mark is from Lucide 0.468.0 (ISC), with the same notice.
 

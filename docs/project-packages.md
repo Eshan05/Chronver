@@ -66,3 +66,43 @@ the extension repository's GitHub release only after a scoped manifest at that t
 confirms both publisher/name and version. Related upstream links are not treated as
 the extension's version history. A release with an empty body is reported honestly
 as having no authored notes.
+
+## Background Watch
+
+Open **Background Watch** from the desktop toolbar. Select a supported software
+release stream or an installed editor extension and choose **Watch**. All npm
+entries in **Packages > Watchlist** are included automatically, across projects.
+
+On Windows, choose **Hourly** to run a check each hour while signed in, even when
+Chronver is closed. Windows can run a missed check after the PC is available again;
+Chronver does not wake the PC. **Check now** also works with the schedule off.
+While Hourly is on, the **Watch** tab next to **Inventory** shows the watchlist
+and recent updates. Turning it off hides the tab; the toolbar bell
+(labeled **Watch settings** in wider windows) still opens Background Watch.
+
+In **Watched**, choose **Watch Chronver** to follow the app's own stable
+[GitHub releases](https://github.com/Eshan05/Chronver/releases). It is opt-in:
+local builds do not count as public releases, and following does not install or
+update the app.
+
+**Feed** shows one card per followed software product or watched npm package,
+sorted by latest stable publish date. In **Notes**, click the bell next to
+**Source** to follow or unfollow the selected software's stable release stream.
+The bell also works with Hourly off. The feed uses reviewed notes for that stream
+and shows up to four earlier releases on the same card. If multiple components
+are followed, the latest one is featured without mixing their versions.
+Unverified publication dates stay undated. The feed reuses cached history.
+**Watched** shows the last verified version for each package, even before a new
+update is detected. **Updates** contains only versions newly detected by the
+watch check. Feed refreshes are separate from the hourly checks.
+
+The first verified version for each watch sets a baseline without an alert.
+Later verified versions appear under **Updates** and may generate a single Windows
+notification per check. If notifications are disabled, the updates are still saved.
+
+Software watches report stable publisher releases, not installer availability.
+Extension watches use the selected editor and profile and verify editor
+compatibility. If the saved extension version no longer matches the profile,
+the check reports it as unverified until inventory is refreshed. Background
+checks do not open editors, rescan the machine, update packages, or run AI.
+Webhook delivery is not included.

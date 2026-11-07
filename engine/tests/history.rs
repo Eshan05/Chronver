@@ -34,6 +34,37 @@ fn release(v: &str) -> serde_json::Value {
     serde_json::json!({"tag_name":v,"name":v,"body":"Fixed a real bug","html_url":format!("https://github.com/a/b/releases/tag/{v}"),"published_at":null,"draft":false,"prerelease":false})
 }
 #[test]
+fn chronver_release_source_excludes_drafts_and_marks_previews() {
+    let url = "https://api.github.com/repos/Eshan05/Chronver/releases?per_page=20&page=1";
+    let mut app = Engine {
+        catalog: catalog::bundled().unwrap(),
+        fetcher: Fake { pages: HashMap::new(), calls: RefCell::new(vec![]) },
+    };
+    app.fetcher.pages.insert(url.into(), ("[]".into(), None));
+    let empty = app.history("chronver", Some("main"), None, false).unwrap();
+    assert!(empty.report.notes.is_empty());
+
+    let chronver_release = |tag: &str, draft: bool, prerelease: bool| {
+        let mut value = release(tag);
+        value["html_url"] = format!("https://github.com/Eshan05/Chronver/releases/tag/{tag}").into();
+        value["published_at"] = "2026-11-21T00:00:00Z".into();
+        value["draft"] = draft.into();
+        value["prerelease"] = prerelease.into();
+        value
+    };
+    app.fetcher.pages.insert(url.into(), (serde_json::json!([
+        chronver_release("v0.4.0", true, false),
+        chronver_release("v0.3.0-beta.1", false, true),
+        chronver_release("v0.1.0", false, false),
+    ]).to_string(), None));
+    let page = app.history("chronver", Some("main"), None, false).unwrap();
+    assert_eq!(page.report.notes.len(), 2);
+    assert!(page.report.notes.iter().any(|n| n.version.as_deref() == Some("0.1.0") && !n.preview));
+    assert!(page.report.notes.iter().any(|n| n.version.as_deref() == Some("0.3.0-beta.1") && n.preview));
+    assert_eq!(app.fetcher.calls.borrow().as_slice(), [url, url]);
+}
+
+#[test]
 fn github_api_failure_uses_official_atom_without_claiming_complete_channel_coverage() {
     let mut e = engine();
     e.fetcher.pages.insert("https://github.com/a/b/releases.atom".into(),(r#"<feed xmlns="http://www.w3.org/2005/Atom"><id>https://github.com/a/b/releases</id><title>Releases</title><updated>2026-11-10T00:00:00Z</updated><entry><id>tag:one</id><title>1.1.0</title><link href="https://github.com/a/b/releases/tag/v1.1.0"/><updated>2026-11-10T00:00:00Z</updated><content type="html">&lt;p&gt;Fixed a startup crash.&lt;/p&gt;</content></entry></feed>"#.into(),None));

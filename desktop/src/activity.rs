@@ -243,7 +243,7 @@ impl State {
     }
 
     pub fn mark_current_notes_read(&mut self) {
-        if self.inventory.open {
+        if self.inventory.open || self.background_watch.in_workspace() {
             return;
         }
         let Some(p) = self.selected().filter(|p| !p.sample_notes) else {

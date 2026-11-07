@@ -594,6 +594,7 @@ fn reader_header(s: &State, p: &Package, k: &Kit, layers: &mut Vec<El>) -> El {
                 .size(28., 28.)
                 .key("unfollow-package")
         }))
+        .children(crate::background_watch_ui::reader_button(s, p, k))
         .child(
             Button::new("Source")
                 .icon(&glyphs::ARROW_RIGHT)
@@ -1732,7 +1733,28 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
     cx.help_look(theme::tooltip(s.dark, &k));
     cx.caption_color(k.c.text_base);
     let chrome = cx.chrome_insets();
-    let compact_header = cx.layout_with("toolbar", |r| r[2] < 760.).unwrap_or(true);
+    let watch_workspace = !s.inventory.open && s.background_watch.in_workspace();
+    let sidebar_open = !watch_workspace
+        && if s.inventory.open {
+            s.inventory.workspace.pane.is_open()
+        } else {
+            s.pane.is_open()
+        };
+    let watch_enabled = s.background_watch.enabled();
+    let compact_at = if watch_enabled { 930. } else { 880. };
+    let compact_header = cx
+        .layout_with("toolbar", move |r| r[2] < compact_at)
+        .unwrap_or(true);
+    let workspaces: &[&str] = if watch_enabled {
+        &["Notes", "Inventory", "Watch"]
+    } else {
+        &["Notes", "Inventory"]
+    };
+    let active_workspace = if watch_workspace {
+        2
+    } else {
+        usize::from(s.inventory.open)
+    };
     let mut layers = Vec::new();
     let controls = row()
         .gap(8.)
@@ -1747,26 +1769,20 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
     let context = row()
         .gap(12.0)
         .center_y()
-        .children(
-            (!if s.inventory.open {
-                s.inventory.workspace.pane.is_open()
-            } else {
-                s.pane.is_open()
-            })
-            .then(|| {
-                text(releasescout_engine::APP_NAME)
-                    .font(k.ty.ui_medium)
-                    .color(k.c.text_base)
-            }),
-        )
+        .children((!sidebar_open).then(|| crate::app_chrome::brand(&shell_kit).key("toolbar-brand")))
         .child(
-            SegmentedControl::new(&["Notes", "Inventory"], Some(usize::from(s.inventory.open)))
-                .width(Some(190.0))
+            SegmentedControl::new(workspaces, Some(active_workspace))
+                .width(Some(if watch_enabled { 234.0 } else { 190.0 }))
                 .label("Workspace view")
                 .on_pick(|s: &mut State, i, tx| {
                     s.inventory.workspace.context = None;
-                    s.inventory.open = i == 1;
-                    s.mark_current_notes_read();
+                    if i == 2 {
+                        s.open_watch_workspace();
+                    } else {
+                        s.background_watch.leave_workspace();
+                        s.inventory.open = i == 1;
+                        s.mark_current_notes_read();
+                    }
                     tx.instant();
                 })
                 .build(&shell_kit)
@@ -1775,6 +1791,8 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
     let (reader, inventory_counts) = if s.inventory.open {
         let (view, counts) = crate::inventory_ui::view(s, &k, &mut layers, cx);
         (view.key("inventory-page"), Some(counts))
+    } else if watch_workspace {
+        (crate::background_watch_ui::workspace(s, &k, cx), None)
     } else {
         let content = reader(s, &k, &mut layers, cx).key("notes-page");
         let reader = if s.section == LibrarySection::Packages {
@@ -1795,6 +1813,8 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
             |s: &mut State| &mut s.inventory.workspace.pane,
             crate::inventory_sources::view(s, &shell_kit),
         )
+    } else if watch_workspace {
+        SplitView::new(reader)
     } else {
         SplitView::new(reader).sidebar(
             &s.pane,
@@ -1818,6 +1838,7 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
     crate::sidebar_actions::view(s, &k, &mut layers);
     crate::ai_menu::view(s, &k, &mut layers);
     crate::command::view(s, &k, &mut layers);
+    crate::background_watch_ui::view(s, &k, &mut layers);
     col()
         .key("app")
         .w_full()
@@ -1825,26 +1846,11 @@ pub fn view(s: &State, cx: &mut Cx<State>) -> El {
         .fill(shell_background)
         .child(panes)
         .child(crate::app_chrome::footer(s, &k, inventory_counts))
-        .children(
-            (if s.inventory.open {
-                s.inventory.workspace.pane.is_open()
-            } else {
-                s.pane.is_open()
-            })
-            .then(|| {
-                row()
-                    .key("sidebar-brand")
-                    .absolute(chrome.leading + 48., 13.)
-                    .gap(9.0)
-                    .center_y()
-                    .child(icon(&glyphs::FILE_TEXT, 17.0).color(k.c.text_accent))
-                    .child(
-                        text(releasescout_engine::APP_NAME)
-                            .font(TextStyle::new(14.0, 550.0).lh(22.0))
-                            .color(k.c.text_base),
-                    )
-            }),
-        )
+        .children(sidebar_open.then(|| {
+            crate::app_chrome::brand(&shell_kit)
+                .key("sidebar-brand")
+                .absolute(chrome.leading + 48., 13.)
+        }))
         .children(layers)
 }
 

@@ -1668,6 +1668,289 @@ fn watchlist_is_project_free_editable_and_independent_of_inventory() {
 }
 
 #[test]
+fn background_watch_panel_fits_and_links_to_a_watched_package() {
+    use crate::background_watch::Target;
+
+    for size in [(1024., 640.), (1280., 800.)] {
+        let mut state = State::demo();
+        crate::background_watch_ui::scene(&mut state);
+        let name = state
+            .selected()
+            .unwrap()
+            .watchlist
+            .as_ref()
+            .unwrap()
+            .name
+            .clone();
+        let target = Target::Npm { name: name.clone() };
+        state.query = TextEdit::new("does-not-match");
+        state.refilter();
+        let mut rt = runtime_with(state, size);
+        rt.frame(0.3);
+        for key in ["watch-schedule", "watch-check-now"] {
+            let [x, y, w, h] = rt
+                .elements()
+                .iter()
+                .find(|e| e.key.as_deref() == Some(key))
+                .unwrap()
+                .rect;
+            assert!(x >= 0. && y >= 0. && x + w <= size.0 && y + h <= size.1);
+        }
+        tap(&mut rt, "background-watch-tabs/segment2");
+        let update = format!("{}-2.0.0", target.key());
+        rt.frame(0.3);
+        let (x, y) = rt.find(&update).unwrap();
+        assert!(x >= 0. && y >= 0. && x <= size.0 && y <= size.1);
+        assert!(rt.accessibility_action(&update, rune::accesskit::Action::Click, None));
+        rt.frame(0.);
+        assert_eq!(
+            rt.state
+                .selected()
+                .and_then(|p| p.watchlist.as_ref())
+                .map(|e| e.name.as_str()),
+            Some(name.as_str()),
+            "revealed={:?} visible={:?}",
+            rt.state.command.revealed,
+            rt.state.visible,
+        );
+        assert_eq!(rt.state.query.text, "does-not-match");
+        assert!(rt.find("watch-check-now").is_none());
+    }
+}
+
+#[test]
+fn npm_watch_baseline_and_history_do_not_appear_as_updates() {
+    let mut state = State::demo();
+    let entry = crate::background_watch_ui::npm_history_scene(&mut state);
+    let mut rt = runtime_with(state, (1024., 640.));
+    rt.frame(0.3);
+    let row = format!("npm-{}/release-history", entry.id());
+    assert!(rt.accessibility_json().to_string().contains("Last verified: 15.1.0"));
+    assert!(!rt.accessibility_json().to_string().contains("15.0.1"));
+    tap(&mut rt, &row);
+    rt.frame(0.3);
+    let tree = rt.accessibility_json().to_string();
+    assert!(tree.contains("15.0.1"));
+    assert!(tree.contains("Oct 03, 2026"));
+    tap(&mut rt, "background-watch-tabs/segment2");
+    rt.frame(0.3);
+    let tree = rt.accessibility_json().to_string();
+    assert!(tree.contains("No new updates detected"));
+    assert!(!tree.contains("15.0.1"));
+}
+
+#[test]
+fn watch_feed_groups_busy_packages_and_shows_earlier_versions_inline() {
+    for viewport in [(1024., 640.), (1440., 900.), (1920., 1080.)] {
+        let mut state = State::demo();
+        crate::background_watch_ui::npm_feed_scene(&mut state);
+        let zod = state.packages.watch.entries[1].id();
+        let react = state.packages.watch.entries[0].id();
+        let next = state.packages.watch.entries[2].id();
+        let typescript = state.packages.watch.entries[3].id();
+        let vitest = state.packages.watch.entries[4].id();
+        let mut rt = runtime_with(state, viewport);
+        rt.frame(0.3);
+        let tree = rt.accessibility_json().to_string();
+        let newer = tree.find("4.6.7").unwrap();
+        let older = tree.find("19.0.1").unwrap();
+        assert!(newer < older);
+        assert!(tree.contains("Oct 12, 2026"));
+        assert!(tree.contains("Open zod notes"));
+        assert_eq!(tree.matches("Open zod notes").count(), 1);
+        assert!(tree.contains("Earlier releases"));
+        for version in ["4.6.6", "4.6.5", "4.6.4", "4.6.3"] {
+            assert!(tree.contains(version), "missing prior release {version}");
+        }
+        assert!(tree.contains("Oct 11, 2026"));
+        assert!(tree.contains("Improved schema validation."));
+        assert!(tree.contains("Package overview"));
+        assert!(tree.contains("A library for building user interfaces."));
+        assert_eq!(tree.matches("Improved schema validation.").count(), 1);
+        let elements = rt.elements();
+        assert_eq!(elements.iter().filter(|e| e.key.as_deref() == Some("feed-package-icon")).count(), 5);
+        let rect = |key: &str| elements.iter().find(|e| e.key.as_deref() == Some(key)).unwrap().rect;
+        let grid = rect("watch-feed-grid");
+        assert!(viewport.0 - (grid[0] + grid[2]) < 24., "{viewport:?}: {grid:?}");
+        if viewport.0 == 1920. {
+            let last = rect(&format!("feed-{vitest}"));
+            let first = rect(&format!("feed-{zod}"));
+            assert!((first[1] - last[1]).abs() < 1., "{first:?}, {last:?}");
+            assert!((grid[0] + grid[2] - last[0] - last[2]).abs() < 1.);
+        }
+        let (first_x, first_y) = rt.find(&format!("feed-{zod}")).unwrap();
+        let (second_x, second_y) = rt.find(&format!("feed-{react}")).unwrap();
+        let (_, third_y) = rt.find(&format!("feed-{next}")).unwrap();
+        let (_, fourth_y) = rt.find(&format!("feed-{typescript}")).unwrap();
+        let (_, history_y) = rt.find(&format!("feed-{zod}/earlier-releases")).unwrap();
+        assert!(history_y > first_y);
+        assert!(
+            second_x > first_x && (second_y - first_y).abs() < 2.,
+            "{viewport:?}: first ({first_x}, {first_y}), second ({second_x}, {second_y})"
+        );
+        assert_eq!(third_y > first_y + 100., viewport.0 == 1024.);
+        assert_eq!(fourth_y > first_y + 100., viewport.0 < 1920.);
+        tap(&mut rt, "background-watch-tabs/segment2");
+        let events = rt.accessibility_json().to_string();
+        assert!(events.contains("No new updates detected"));
+        assert!(!events.contains("4.6.7"));
+    }
+}
+
+#[test]
+fn watch_feed_shows_followed_software_alongside_npm() {
+    let mut state = State::demo();
+    crate::background_watch_ui::software_feed_scene(&mut state);
+    let mut rt = runtime_with(state, (1280., 800.));
+    rt.frame(0.5);
+    assert!(rt.find("feed-app-atlas-cli/earlier-releases").is_some());
+    let tree = rt.accessibility_json().to_string();
+    assert!(tree.find("MongoDB Atlas CLI 1.60.1").unwrap() < tree.find("zod 4.6.7").unwrap());
+    assert!(tree.contains("Added platform support."));
+    assert!(tree.contains("Oct 20, 2026"));
+    assert!(tree.contains("1.60.0") && tree.contains("Undated"));
+    tap(&mut rt, "background-watch-tabs/segment2");
+    let updates = rt.accessibility_json().to_string();
+    assert!(updates.contains("No new updates detected"));
+    assert!(!updates.contains("MongoDB Atlas CLI 1.60.1"));
+}
+
+#[test]
+fn notes_watch_bell_fits_next_to_source_and_restores_saved_follow() {
+    use crate::background_watch::{Follow, Settings, Target};
+    use releasescout_engine::inventory::{Manager, parse};
+
+    let mut state = State::new();
+    let output = serde_json::json!({"installed":{"Sources":[{
+        "SourceDetails":{"Name":"winget"},
+        "Packages":[{"PackageIdentifier":"GitHub.cli","Version":"2.82.0"}]
+    }]}});
+    state.accept_scan(parse(Manager::Winget, false, &output.to_string()).unwrap());
+    let id = state
+        .catalog
+        .packages
+        .iter()
+        .find(|p| p.reference_id.as_deref() == Some("gh"))
+        .unwrap()
+        .id
+        .clone();
+    state.select_package(&id);
+    state.pane.set_width(420.);
+    state.background_watch.preference.request((), |_| Settings {
+        enabled: false,
+        items: vec![Follow {
+            title: "GitHub CLI".into(),
+            target: Target::App {
+                package: "gh".into(),
+                stream: "main".into(),
+            },
+        }],
+    });
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+    while !state.poll_background_watch() {
+        assert!(
+            std::time::Instant::now() < deadline,
+            "Watch preference did not resolve"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(5));
+    }
+    assert!(!state.background_watch.enabled());
+    let mut rt = runtime_with(state, (1024., 640.));
+    rt.frame(0.5);
+    let elements = rt.elements();
+    let element = |key| elements.iter().find(|e| e.key.as_deref() == Some(key)).unwrap();
+    let bell = element("reader-watch");
+    let source = element("open-release");
+    let [x, y, w, h] = bell.rect;
+    assert_eq!(bell.label.as_deref(), Some("Unwatch GitHub CLI"));
+    assert!((source.rect[0] - x - w - 4.).abs() < 0.5);
+    assert!((source.rect[1] + source.rect[3] / 2. - y - h / 2.).abs() < 0.5);
+    assert!(x >= 420. && source.rect[0] + source.rect[2] <= 1024.);
+    assert!(rt.find("global-background-watch").is_some());
+
+    rt.update(|s, tx| {
+        s.catalog
+            .packages
+            .iter_mut()
+            .find(|p| p.id == id)
+            .unwrap()
+            .reference_id = None;
+        tx.instant();
+    });
+    rt.frame(0.);
+    assert!(rt.find("reader-watch").is_none());
+}
+
+#[test]
+fn chronver_watch_is_discoverable_without_following_it() {
+    let mut state = State::demo();
+    crate::background_watch_ui::scene(&mut state);
+    let mut rt = runtime_with(state, (1440., 900.));
+    rt.frame(0.5);
+    assert!(rt.find("watch-settings-caption").is_some());
+    assert!(rt.find("chronver-watch/watch-chronver").is_some());
+    assert!(rt.find("chronver-watch/chronver-release-page").is_some());
+    let tree = rt.accessibility_json().to_string();
+    assert!(tree.contains("Watch Chronver"));
+    assert!(!tree.contains("Unwatch Chronver"));
+    assert!(!tree.contains("No verified public release yet"));
+}
+
+#[test]
+fn watch_workspace_is_conditional_and_keeps_existing_navigation() {
+    let mut state = State::demo();
+    state.pane.set_width(420.);
+    let mut rt = runtime_with(state, (1024., 640.));
+    let mut insets = rune::ChromeInsets::default();
+    insets.trailing = rune::Titlebar::CAPTION_BUTTON_WIDTH * 3.;
+    insets.height = rune_kit::shell::TOOLBAR_HEIGHT;
+    rt.set_chrome_insets(insets);
+    rt.frame(1.);
+    assert!(rt.find("workspace-view/segment2").is_none());
+    assert!(rt.find("global-background-watch").is_some());
+
+    rt.update(|s, tx| {
+        crate::background_watch_ui::set_fixture_enabled(s, true);
+        tx.instant();
+    });
+    rt.frame(1.);
+    let rect = |key| rt.elements().iter().find(|e| e.key.as_deref() == Some(key)).unwrap().rect;
+    let nav = rect("workspace-view");
+    let controls = rect("global-controls");
+    assert!(nav[0] + nav[2] <= controls[0], "{nav:?}, {controls:?}");
+    assert!(rt.find("notes-page").is_some());
+    tap(&mut rt, "workspace-view/segment2");
+    assert!(rt.find("watch-page").is_some());
+    assert!(rt.find("sidebar-brand").is_none());
+    let elements = rt.elements();
+    let brand = elements.iter().find(|e| e.key.as_deref() == Some("toolbar-brand")).unwrap().rect;
+    let nav = elements.iter().find(|e| e.key.as_deref() == Some("workspace-view")).unwrap().rect;
+    assert!(brand[2] > 80. && brand[0] + brand[2] <= nav[0], "{brand:?}, {nav:?}");
+    assert!(rt.find("watch-check-now").is_some());
+    assert!(rt.find("notes-page").is_none());
+    assert!(rt.find("background-watch-dialog").is_none());
+    tap(&mut rt, "global-background-watch");
+    assert!(rt.find("watch-chronver").is_some());
+    tap(&mut rt, "workspace-view/segment1");
+    assert!(rt.find("inventory-page").is_some());
+    tap(&mut rt, "workspace-view/segment0");
+    assert!(rt.find("notes-page").is_some());
+    assert!(rt.find("sidebar-brand").is_some());
+    assert!(rt.find("toolbar-brand").is_none());
+    tap(&mut rt, "workspace-view/segment2");
+
+    rt.update(|s, tx| {
+        crate::background_watch_ui::set_fixture_enabled(s, false);
+        tx.instant();
+    });
+    rt.frame(1.);
+    assert!(rt.find("workspace-view/segment2").is_none());
+    assert!(rt.find("watch-page").is_none());
+    assert!(rt.find("notes-page").is_some());
+    assert!(rt.find("global-background-watch").is_some());
+}
+
+#[test]
 fn watchlist_controls_fit_and_follow_unfollow_without_project_or_version() {
     for size in [(1024.0, 640.0), (1280.0, 800.0)] {
         let mut rt = runtime(size);

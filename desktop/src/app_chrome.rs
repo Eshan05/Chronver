@@ -14,8 +14,8 @@ pub struct Chrome {
 }
 
 macro_rules! asset {
-    ($name:ident, $file:literal) => {
-        static $name: Icon = Icon {
+    ($vis:vis $name:ident, $file:literal) => {
+        $vis static $name: Icon = Icon {
             name: concat!("chrome-", $file),
             view: 24.,
             body: include_str!(concat!("../assets/status/", $file, ".svg")),
@@ -25,8 +25,14 @@ macro_rules! asset {
 asset!(SUN, "sun");
 asset!(MOON, "moon");
 asset!(REFRESH, "refresh-cw");
+asset!(pub(crate) BELL, "bell");
 asset!(WARNING, "triangle-alert");
 asset!(HISTORY, "history");
+static CHRONVER_MARK: Icon = Icon {
+    name: "chronver-brand",
+    view: 32.,
+    body: include_str!("../assets/brand/chronver-mark.svg"),
+};
 static LIBRARY: Icon = Icon {
     name: "activity-library",
     view: 24.,
@@ -37,6 +43,22 @@ static SYSTEM: Icon = Icon {
     view: 24.,
     body: include_str!("../assets/providers/monitor.svg"),
 };
+
+pub fn brand_mark(size: f32) -> El {
+    icon(&CHRONVER_MARK, size).a11y_hidden()
+}
+
+pub fn brand(k: &Kit) -> El {
+    row()
+        .gap(8.)
+        .center_y()
+        .child(brand_mark(22.))
+        .child(
+            text(releasescout_engine::APP_NAME)
+                .font(TextStyle::new(14., 550.).lh(22.))
+                .color(k.c.text_base),
+        )
+}
 
 pub fn inventory_busy(s: &State) -> usize {
     s.inventory
@@ -174,6 +196,7 @@ fn activity_icon(s: &State, notices: usize, k: &Kit) -> El {
 
 fn open_inventory(s: &mut State) {
     s.inventory.workspace.context = None;
+    s.background_watch.leave_workspace();
     s.inventory.open = true;
     if !notice_messages(s).is_empty() {
         s.inventory.notices_open = true;
@@ -205,7 +228,7 @@ pub fn header(s: &State, k: &Kit, compact: bool) -> El {
     let notes_loading = status == NOTES_LOADING;
     row()
         .key("global-controls")
-        .gap(8.)
+        .gap(if compact { 4. } else { 8. })
         .center_y()
         .child(crate::command::trigger(k, compact))
         .child(
@@ -254,6 +277,27 @@ pub fn header(s: &State, k: &Kit, compact: bool) -> El {
             )
             .disabled(inventory_busy(s) > 0)
             .on_press(|s: &mut State| s.start_discovery()),
+        )
+        .child(
+            row()
+                .key("global-background-watch")
+                .role("button")
+                .label("Background Watch")
+                .help("Background Watch")
+                .focusable(true)
+                .h(28.)
+                .min_w(28.)
+                .px(7.)
+                .gap(6.)
+                .center_y()
+                .radius(6.)
+                .hover(k.c.hover)
+                .focus_ring(1., -1., k.c.border_focus)
+                .child(icon(&BELL, 14.).color(k.c.icon_muted).a11y_hidden())
+                .children((!compact).then(|| {
+                    text("Watch settings").key("watch-settings-caption").font(k.ty.text_xsmall).color(k.c.text_muted)
+                }))
+                .on_press(|s: &mut State| s.open_background_watch_settings()),
         )
         .child(
             tool("global-ai-settings", &glyphs::SPARKLE, "AI settings", k)

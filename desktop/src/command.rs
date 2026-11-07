@@ -425,6 +425,7 @@ fn activate(s: &mut State, position: usize, tx: &mut Tx) {
             }
             s.select_package(&id);
             s.rebuild_sidebar_groups();
+            s.background_watch.leave_workspace();
             s.inventory.open = false;
             s.pane.set_open(true);
             s.mark_current_notes_read();
@@ -442,12 +443,14 @@ fn activate(s: &mut State, position: usize, tx: &mut Tx) {
             if previous_reveal {
                 s.set_dataset(s.dataset);
             }
+            s.background_watch.leave_workspace();
             s.inventory.open = false;
             s.pane.set_open(true);
             s.status = s.inventory_summary();
             tx.focus("package-filter", true);
         }
         Target::Inventory => {
+            s.background_watch.leave_workspace();
             s.inventory.open = true;
             tx.focus("workspace-view", false);
         }

@@ -12,6 +12,10 @@ mod ai_models;
 mod ai_metadata;
 mod ai_summary;
 mod app_chrome;
+mod background_feed;
+mod background_watch;
+mod background_watch_ui;
+mod background_windows;
 mod command;
 mod custom_icons;
 mod description_preview;
@@ -72,6 +76,23 @@ fn headless() -> bool {
 }
 
 fn main() {
+    let mut args = std::env::args_os().skip(1);
+    let first = args.next();
+    let first = first.as_deref().and_then(std::ffi::OsStr::to_str);
+    if first == Some(background_windows::WORKER_ARG) {
+        if args.next().is_some() {
+            std::process::exit(2);
+        }
+        if let Err(error) = background_watch::run(&background_watch::directory(), false) {
+            eprintln!("{error}");
+            std::process::exit(1);
+        }
+        return;
+    }
+    let watch_launch = first.is_some_and(|arg| arg.starts_with("chronver-watch:"));
+    if watch_launch && (first.and_then(background_windows::activation).is_none() || args.next().is_some()) {
+        return;
+    }
     let native = !headless();
     let native_material = cfg!(target_os = "windows")
         && std::env::var_os("CHRONVER_NATIVE_BACKDROP").is_some_and(|value| value == "1");
@@ -102,6 +123,10 @@ fn main() {
             s.note_cache.write.set_waker(waker.clone());
             s.note_prefetch.set_waker(waker.clone());
             s.extensions.set_update_waker(waker.clone());
+            s.background_watch.work.set_waker(waker.clone());
+            s.background_watch.preference.set_waker(waker.clone());
+            s.background_watch.history_work.set_waker(waker.clone());
+            s.background_watch.feed.set_waker(waker.clone());
             for work in &s.inventory.discovery { work.set_waker(waker.clone()); }
             if !headless() {
                 s.ai.model_file_enabled = true;
@@ -116,10 +141,15 @@ fn main() {
                 s.restore_project();
                 s.restore_activity();
                 s.restore_startup_inventory();
+                if let Some(key) = std::env::args().nth(1).as_deref().and_then(background_windows::activation) {
+                    s.activate_background_watch(key.to_ascii_lowercase());
+                } else {
+                    s.restore_background_watch();
+                }
             }
         }),
         poll: Some(|s: &mut State, _, tx| {
-            if s.backdrop.sync(s.dark) | s.poll_engine() | s.poll_history() | s.poll_inventory() | s.poll_inventory_export() | s.poll_discovery() | s.poll_icons() | s.poll_custom_icons() | s.poll_package_icons() | s.poll_remote_icons() | s.poll_source_discovery() | s.poll_packages() | s.poll_watchlist() | s.poll_activity() | s.poll_note_cache() | s.poll_note_prefetch() | s.poll_extension_updates() | s.ai.poll() {
+            if s.backdrop.sync(s.dark) | s.poll_engine() | s.poll_history() | s.poll_inventory() | s.poll_inventory_export() | s.poll_discovery() | s.poll_icons() | s.poll_custom_icons() | s.poll_package_icons() | s.poll_remote_icons() | s.poll_source_discovery() | s.poll_packages() | s.poll_watchlist() | s.poll_activity() | s.poll_note_cache() | s.poll_note_prefetch() | s.poll_extension_updates() | s.poll_background_watch() | s.ai.poll() {
                 command::refresh(s);
                 tx.instant();
                 true
@@ -388,7 +418,11 @@ fn main() {
     } else {
         app
     };
-    app.run();
+    if watch_launch {
+        app.args(std::iter::empty::<String>()).run();
+    } else {
+        app.run();
+    }
 }
 
 fn readme_scene(s: &mut State) {

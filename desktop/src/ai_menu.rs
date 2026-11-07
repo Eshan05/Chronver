@@ -415,6 +415,7 @@ fn load_for_action(s: &mut State, tx: &mut Tx) {
     if !s.selected().is_some_and(|p| p.id == id) {
         return;
     }
+    s.background_watch.leave_workspace();
     s.inventory.open = false;
     if let Some((from, to)) = range {
         let q = s.engine_query();
@@ -448,6 +449,7 @@ fn start_summary(s: &mut State, tx: &mut Tx) {
     if !s.selected().is_some_and(|p| p.id == id) {
         return;
     }
+    s.background_watch.leave_workspace();
     s.inventory.open = false;
     s.mode = NoteMode::Ai;
     s.reader_controls.release_index_open = false;

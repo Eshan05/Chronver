@@ -236,6 +236,33 @@
       ]
     },
     {
+      "id": "chronver",
+      "name": "Chronver",
+      "tracking": "track",
+      "identity": "confirmed",
+      "reference_urls": [
+        "https://github.com/Eshan05/Chronver/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Public Chronver releases",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "Eshan05",
+              "repo": "Chronver",
+              "tag_prefix": "v",
+              "max_pages": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "cloudflared",
       "name": "Cloudflared",
       "tracking": "track",

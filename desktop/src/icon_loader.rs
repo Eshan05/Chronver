@@ -35,12 +35,16 @@ impl Default for Loader {
 
 pub(crate) fn priority_packages(s: &State) -> Vec<usize> {
     let mut seen = HashSet::new();
-    s.visible
-        .iter()
-        .filter_map(|&i| s.rows.get(i))
-        .find(|r| Some(r.id.as_str()) == s.table.cursor())
-        .map(|r| r.package)
+    s.watch_icon_packages()
         .into_iter()
+        .chain(
+            s.visible
+                .iter()
+                .filter_map(|&i| s.rows.get(i))
+                .find(|r| Some(r.id.as_str()) == s.table.cursor())
+                .map(|r| r.package)
+                .into_iter(),
+        )
         .chain(
             s.sidebar_scroll
                 .visible_rows
