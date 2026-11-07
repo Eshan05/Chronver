@@ -253,10 +253,50 @@ provider identities and confirmed candidates. WinGet, Choco, NPM, PNPM and Bun
 allow a newer specific target; availability is not checked. Scoop uses its current
 manifest instead. Pinned entries and unsupported providers have no command action.
 Installer origin, active registry configuration and compatibility remain unverified;
-there is deliberately no execution path. The AI dropdown offers latest / last 20
-update briefs, changes since installed, breaking changes, description and name
-updates. These actions show UI-only previews: no model calls, history fetches or
-metadata edits. Copy AI context retains the bounded, source-linked prompt workflow.
+there is deliberately no execution path.
+
+Open **AI settings** from the header or a summary action. Choose OpenAI, Anthropic
+(Claude), Google (Gemini), or **Custom endpoint**, then enter a model ID and API
+key. For a custom service such as DeepSeek or Qwen, enter its OpenAI-compatible
+Chat Completions base URL (including its version path, such as `/v1`) and pick a
+model that supports JSON mode. Local loopback endpoints may use HTTP without a key.
+
+Choose a provider from the icon rail, then search or pick a model by name or ID.
+Hover a suggestion to see its exact ID, or use the pencil to enter one directly.
+The file icon opens `%LOCALAPPDATA%\ReleaseScout\ai-models.json` in
+Notepad, starting with the [bundled catalog](assets/ai-models.json) if the file
+is absent. In that JSON file, each provider's first ID is its default; omit a
+provider to use the bundled suggestions, or set it to an empty list to use
+manual IDs only. The dialog rereads the file when reopened. API keys and endpoint
+URLs aren't stored in this file.
+
+The **AI** reader tab and the sparkle menu offer a brief of the latest or up to 20
+loaded releases, a summary of the installed-to-update range, and breaking changes.
+The confirmation previews an approximate input token count and the number of
+releases and requests included. Only clicking **Summarize** sends notes to the
+displayed provider. The quick briefs use excerpts; **Summarize since installed**
+and **Explain breaking changes** review all loaded authored text, grouping up to
+three releases or sections per request. Markdown list items and code blocks
+stay intact, and continued sections keep their heading context. Publisher-marked
+breaking changes are kept verbatim; other findings are checked against the notes.
+Chronver sends the planned requests in order and combines the findings. Stop the
+review to prevent further requests. Missing notes and failed requests are
+reported separately. Chronver doesn't send the rest of the local
+inventory or switch providers on failure. Results render as Markdown in the
+**AI** tab and link back to the original notes without changing the changelog.
+Chronver checks that each point quotes its cited release and flags omitted points
+and shortened notes. A brief of long or paged notes is not a complete review.
+The connection is session-only: choose **Disconnect** or quit Chronver to clear
+it. **Copy AI context** still works without a key.
+
+**Update name** and **Update description** check known publisher metadata first
+and show a suggestion with its source. Apply saves only a local display override;
+it doesn't change package identity or manager records. OpenAI and Claude can make
+an explicit, cited web lookup if publisher metadata isn't enough. Other providers
+use the browser lookup and publisher URL option instead. Opening a summary
+action loads missing notes when a source is known and keeps the confirmation open
+until the user can review the token estimate.
+
 Native scenes: `sidebar-details`, `sidebar-versions`, `sidebar-versions-light`,
 `sidebar-upgrade`, `sidebar-ai-menu`, `sidebar-ai-menu-light`, and the dark/light
 `sidebar-groups-extensions` and `sidebar-groups-packages` scenes.

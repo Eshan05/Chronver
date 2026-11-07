@@ -142,6 +142,26 @@ pub fn cache_directory() -> PathBuf {
         .unwrap_or_else(std::env::temp_dir)
         .join("ReleaseScout/cache")
 }
+
+impl State {
+    pub(crate) fn installed_update_range(&self, id: &str) -> Option<(&str, &str)> {
+        let package = self.catalog.packages.iter().find(|p| p.id == id)?;
+        let query = self.live.sessions.get(id)?;
+        let profile = self.live.catalog.packages.iter().find(|p| p.id == id)?;
+        if package.extension.is_some()
+            || package.dependency.is_some()
+            || package.watchlist.is_some()
+            || profile.streams.get(query.component)?.basis != Basis::Version
+        {
+            return None;
+        }
+        let from = package.installed.as_deref()?.trim();
+        let to = package.target.as_deref()?.trim();
+        (!from.starts_with('<')
+            && releasescout_engine::version::candidate_order(from, to).is_some_and(|ord| ord.is_gt()))
+            .then_some((from, to))
+    }
+}
 pub fn gcloud_scene(s: &mut State) {
     let page: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string("artifacts/gcloud-history.json")
@@ -446,6 +466,9 @@ impl State {
         self.live.active = None;
         if self.live.sessions[&id].pending_feed.is_none() {
             self.capture_note_feed(&id, false);
+        }
+        if succeeded {
+            self.ai.invalidate(&id);
         }
         let q = self.live.sessions.get_mut(&id).unwrap();
         match result {

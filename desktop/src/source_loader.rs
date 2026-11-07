@@ -131,6 +131,9 @@ impl State {
             }
             changed = true;
         }
+        if changed {
+            self.note_prefetch.refresh();
+        }
         changed
     }
 

@@ -690,6 +690,7 @@ impl State {
         if let Some(id) = selected {
             self.select_package(&id);
         }
+        self.note_prefetch.refresh();
     }
 }
 

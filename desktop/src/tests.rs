@@ -161,7 +161,7 @@ fn dropdowns_share_comfortable_rows_and_ai_icons_in_both_themes() {
 }
 
 #[test]
-fn ai_actions_are_always_visible_and_the_dropdown_is_ui_only() {
+fn ai_actions_are_always_visible_and_open_without_sending_requests() {
     for dark in [false, true] {
         let mut rt = runtime((1024., 640.));
         rt.update(|s, _| {
@@ -242,7 +242,296 @@ fn ai_actions_are_always_visible_and_the_dropdown_is_ui_only() {
         assert_eq!(rt.state.activity.data.description_overrides, prefs);
         assert!(!rt.state.live.work.is_pending() && !rt.state.live.history.is_pending());
         assert!(!rt.state.inventory.work.is_pending());
+        assert!(!rt.state.ai.work.is_pending());
     }
+}
+
+#[test]
+fn ai_key_entry_stays_masked_and_saving_does_not_submit() {
+    use crate::ai_menu::{Intent, Preview};
+    let mut rt = runtime((1024., 640.));
+    rt.update(|s, _| {
+        let p = s.selected().unwrap();
+        let (id, name) = (p.id.clone(), p.name.clone());
+        s.engine_query().report = Some(crate::ai_summary::tests::report());
+        s.ai.preview = Some(Preview { package: id, name, intent: Intent::Latest });
+    });
+    rt.frame(1.);
+    tap(&mut rt, "ai-configure");
+    rt.frame(1.);
+    tap(&mut rt, "ai-key-field");
+    rt.paste("sk-fixture-not-a-real-key");
+    rt.frame(1.);
+    assert!(!rt.accessibility_json().to_string().contains("sk-fixture-not-a-real-key"));
+    tap(&mut rt, "ai-save-key");
+    rt.frame(1.);
+    assert!(rt.find("ai-generate").is_some());
+    assert!(!rt.state.ai.work.is_pending());
+    assert!(rt.accessibility_json().to_string().contains("GPT-6 Luna"));
+    tap(&mut rt, "ai-configure");
+    rt.frame(1.);
+    tap(&mut rt, "ai-provider-option-claude");
+    rt.frame(1.);
+    assert!(rt.accessibility_json().to_string().contains("claude-haiku-5-5"));
+    tap(&mut rt, "ai-save-key");
+    rt.frame(1.);
+    assert!(rt.find("ai-settings-error").is_some(), "a different provider needs its own key");
+    tap(&mut rt, "ai-key-field");
+    rt.paste("fixture-claude-key");
+    rt.frame(1.);
+    tap(&mut rt, "ai-save-key");
+    rt.frame(1.);
+    assert!(rt.accessibility_json().to_string().contains("api.anthropic.com"));
+    assert!(!rt.state.ai.work.is_pending());
+    tap(&mut rt, "ai-configure");
+    rt.frame(1.);
+    tap(&mut rt, "ai-forget-key");
+    rt.frame(1.);
+    assert!(rt.find("ai-configure").is_some());
+    assert!(rt.find("ai-generate").is_none());
+}
+
+#[test]
+fn ai_settings_are_available_from_the_header_without_loaded_notes() {
+    for dark in [true, false] {
+        let mut rt = runtime((760., 500.));
+        rt.update(|s, _| s.dark = dark);
+        rt.frame(1.);
+        tap(&mut rt, "global-ai-settings");
+        rt.frame(1.);
+        assert!(rt.find("ai-settings-dialog").is_some());
+        tap(&mut rt, "ai-provider-option-custom");
+        rt.frame(1.);
+        assert!(rt.find("ai-endpoint-field").is_some());
+        assert!(rt.find("ai-save-key").is_some());
+        rt.key(KeyEvent { key: Key::Escape, mods: Mods::default() });
+        rt.frame(1.);
+        assert!(rt.find("ai-settings-dialog").is_none());
+        assert!(!rt.state.ai.work.is_pending());
+    }
+}
+
+#[test]
+fn ai_settings_searches_models_inline_without_sending_a_request() {
+    for dark in [true, false] {
+        let mut rt = runtime((760., 500.));
+        rt.update(|s, _| s.dark = dark);
+        rt.frame(1.);
+        tap(&mut rt, "global-ai-settings");
+        rt.frame(1.);
+        let layout = rt.elements();
+        let dialog = layout.iter().find(|e| e.key.as_deref() == Some("ai-settings-dialog")).unwrap();
+        assert!((dialog.rect[2] - 480.).abs() < 1. && dialog.rect[3] < 275.);
+        assert!(rt.find("ai-provider-rail").is_some());
+        tap(&mut rt, "ai-model-search");
+        rt.paste("6.2 sol");
+        rt.frame(1.);
+        assert!(rt.accessibility_json().to_string().contains("gpt-6.2-sol"));
+        assert!(rt.find("ai-model-option-0").is_none());
+        rt.key(KeyEvent { key: Key::Enter, mods: Mods::default() });
+        rt.frame(1.);
+        tap(&mut rt, "ai-manual-model");
+        rt.frame(1.);
+        assert!(rt.find("ai-model-field").is_some());
+        assert!(rt.accessibility_json().to_string().contains("gpt-6.2-sol"));
+        tap(&mut rt, "ai-provider-option-gemini");
+        rt.frame(1.);
+        assert!(rt.find("ai-model-search").is_some());
+        let tree = rt.accessibility_json().to_string();
+        assert!(tree.contains("gemini-4-hydrogen"));
+        assert!(!tree.contains("gpt-6.2-sol"));
+        assert!(!rt.state.ai.work.is_pending());
+    }
+}
+
+#[test]
+fn ai_key_field_tracks_the_provider_being_configured() {
+    let mut rt = runtime((760., 500.));
+    tap(&mut rt, "global-ai-settings");
+    rt.frame(1.);
+    for (provider, label) in [
+        ("openai", "OpenAI API key"),
+        ("claude", "Anthropic API key"),
+        ("gemini", "Google AI API key"),
+        ("custom", "Custom endpoint API key"),
+    ] {
+        tap(&mut rt, &format!("ai-provider-option-{provider}"));
+        rt.frame(1.);
+        let tree = rt.accessibility_json().to_string();
+        assert!(tree.contains(label), "{provider}: missing {label}");
+        assert!(rt.find("ai-key-field").is_some());
+    }
+    assert!(!rt.state.ai.work.is_pending());
+}
+
+#[test]
+fn ai_explicit_submit_displays_cited_summary_from_custom_endpoint() {
+    use crate::model::NoteMode;
+    use crate::ai_summary::tests::read_mock_request;
+    use std::{
+        io::Write,
+        net::TcpListener,
+        time::{Duration, Instant},
+    };
+
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+    let url = format!("http://{}/v1", listener.local_addr().unwrap());
+    let mut rt = runtime((850., 560.));
+    rt.update(|s, _| {
+        let package = s.selected().unwrap().id.clone();
+        let mut report = crate::ai_summary::tests::report();
+        report.package = package.clone();
+        report.notes[1].body.push_str("\nThe legacy export flag was removed.");
+        s.apply_engine_result(package, Ok(report));
+    });
+    rt.frame(1.);
+    assert!(rt.find("release-document").is_some());
+    tap(&mut rt, "note-mode/segment2");
+    rt.frame(1.);
+    assert!(rt.state.mode == NoteMode::Ai);
+    assert!(rt.find("timeline-item-0").is_none());
+    ai_reader_action(&mut rt, 0);
+    assert!(rt.find("ai-input-estimate").is_some());
+    tap(&mut rt, "ai-configure");
+    rt.frame(1.);
+    tap(&mut rt, "ai-provider-option-custom");
+    rt.frame(1.);
+    tap(&mut rt, "ai-model-field");
+    rt.paste("mock-model");
+    rt.frame(1.);
+    tap(&mut rt, "ai-endpoint-field");
+    rt.paste(url.clone());
+    rt.frame(1.);
+    tap(&mut rt, "ai-save-key");
+    rt.frame(1.);
+    assert!(rt.find("ai-generate").is_some());
+    assert!(!rt.state.ai.work.is_pending());
+    let tree = rt.accessibility_json().to_string();
+    assert!(tree.contains(&format!("{url}/chat/completions")));
+    assert!(tree.contains("Send & summarize"));
+    let server = std::thread::spawn(move || {
+        let (mut stream, _) = listener.accept().unwrap();
+        let (headers, request) = read_mock_request(&mut stream);
+        assert!(headers.starts_with("POST /v1/chat/completions HTTP/1.1"));
+        assert!(!headers.to_ascii_lowercase().contains("authorization:"));
+        assert_eq!(request["model"], "mock-model");
+        let summary = serde_json::json!({
+            "highlights": [{"release": 0, "text": "**Offline export** improved.", "evidence": "The exporter now works offline."}],
+            "breaking_changes": [{"release": 0, "text": "The legacy export flag was removed.", "evidence": "The legacy export flag was removed."}]
+        });
+        let response = serde_json::json!({
+            "choices": [{"finish_reason": "stop", "message": {"content": summary.to_string()}}]
+        }).to_string();
+        write!(stream, "HTTP/1.1 200 OK\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{response}", response.len()).unwrap();
+    });
+    tap(&mut rt, "ai-generate");
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while rt.state.ai.work.is_pending() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    rt.update(|s, _| { s.ai.poll(); });
+    rt.frame(1.);
+    assert!(rt.find("ai-summary").is_some());
+    let tree = rt.accessibility_json().to_string();
+    assert!(tree.contains("Offline export improved."));
+    assert!(tree.contains("1 release reviewed"));
+    assert!(tree.contains("mock-model"));
+    let layout = rt.elements();
+    let item = |key| layout.iter().find(|e| e.key.as_deref() == Some(key)).unwrap().rect;
+    let text_rect = item("ai-text-breaking-0");
+    let source = item("ai-source-breaking-0");
+    assert!((text_rect[1] - source[1]).abs() < 1.);
+    assert!(text_rect[0] + text_rect[2] <= source[0]);
+    assert!(source[2] <= 126.);
+    assert!(item("ai-section-breaking")[1] < item("ai-section-highlights")[1]);
+    assert!(layout.iter().any(|e| e.role == "button" && e.label.as_deref() == Some("Open release 2.0.0")));
+    tap(&mut rt, "note-mode/segment0");
+    rt.frame(1.);
+    assert!(rt.find("timeline-item-0").is_some());
+    assert!(rt.find("ai-summary").is_none());
+    tap(&mut rt, "note-mode/segment2");
+    assert!(rt.find("ai-summary").is_some());
+    server.join().unwrap();
+}
+
+fn ai_reader_action(rt: &mut Runtime<State>, index: usize) {
+    tap(rt, "ai-reader-actions-trigger");
+    rt.frame(1.);
+    assert!(rt.find("ai-reader-actions-menu").is_some());
+    tap(rt, &format!("ai-reader-actions-item{index}"));
+    rt.frame(1.);
+    assert!(rt.find("ai-reader-actions-menu").is_none());
+}
+
+#[test]
+fn ai_confirmation_layout_keeps_review_details_above_the_send_button() {
+    for dark in [true, false] {
+        let mut rt = runtime((680., 500.));
+        rt.update(|s, _| {
+            crate::ai_menu::preview_scene(s);
+            s.dark = dark;
+        });
+        rt.frame(1.);
+        let layout = rt.elements();
+        let item = |key| layout.iter().find(|e| e.key.as_deref() == Some(key)).unwrap().rect;
+        let count = item("ai-preview-release-count");
+        let tokens = item("ai-input-estimate");
+        let destination = item("ai-preview-destination");
+        let send = item("ai-generate");
+        assert!(count[1] + count[3] <= tokens[1]);
+        assert!(tokens[1] + tokens[3] <= destination[1]);
+        assert!(destination[1] + destination[3] <= send[1]);
+        let tree = rt.accessibility_json().to_string();
+        for expected in ["1 release", "GPT-6 Luna", "api.openai.com", "Send & summarize"] {
+            assert!(tree.contains(expected), "missing {expected}");
+        }
+        assert!(!rt.state.ai.work.is_pending());
+    }
+}
+
+#[test]
+fn ai_summary_keeps_the_confirmation_open_when_notes_become_available() {
+    let mut rt = runtime((1024., 640.));
+    rt.update(|s, _| {
+        s.mode = crate::model::NoteMode::Ai;
+        let id = s.selected().unwrap().id.clone();
+        s.engine_query().report = None;
+        s.ai.preview = None;
+        assert!(s.live.sessions[&id].report.is_none());
+    });
+    rt.frame(1.);
+    ai_reader_action(&mut rt, 0);
+    assert!(rt.find("ai-load-range").is_some());
+    assert!(rt.find("ai-input-estimate").is_none());
+    rt.update(|s, _| {
+        let package = s.selected().unwrap().id.clone();
+        let mut report = crate::ai_summary::tests::report();
+        report.package = package.clone();
+        s.apply_engine_result(package, Ok(report));
+    });
+    rt.frame(1.);
+    assert!(rt.find("ai-action-preview-dialog").is_some());
+    assert!(rt.find("ai-input-estimate").is_some());
+    assert!(!rt.state.ai.work.is_pending());
+}
+
+#[test]
+fn ai_breaking_changes_previews_all_batches_before_sending_anything() {
+    let mut rt = runtime((1024., 640.));
+    rt.update(|s, _| {
+        s.mode = crate::model::NoteMode::Ai;
+        let package = s.selected().unwrap().id.clone();
+        let mut report = crate::ai_summary::tests::report();
+        report.package = package.clone();
+        report.notes.remove(0);
+        report.notes[0].body = "A long published note with many changes.\n\n".repeat(900);
+        s.apply_engine_result(package, Ok(report));
+    });
+    rt.frame(1.);
+    ai_reader_action(&mut rt, 3);
+    assert!(rt.find("ai-input-estimate").is_some());
+    assert!(rt.accessibility_json().to_string().contains("2 requests"));
+    assert!(!rt.state.ai.work.is_pending());
 }
 
 #[test]
@@ -3336,6 +3625,26 @@ fn floating_status_lifts_on_hover_and_stays_pinned_with_keyboard_access() {
 }
 
 #[test]
+fn prefetch_is_visible_in_the_header_and_activity_details() {
+    let mut rt = runtime((1280., 760.));
+    rt.update(|s, _| crate::note_prefetch::activity_scene(s));
+    rt.frame(1.);
+    assert!(rt.accessibility_json().to_string().contains("Loading update notes"));
+    assert!(rt.find("activity-notes-loading").is_none());
+    tap(&mut rt, "global-activity");
+    assert!(!rt.state.inventory.open);
+    assert!(rt.state.chrome.status_pinned);
+    let elements = rt.elements();
+    for (key, value) in [
+        ("activity-notes-loading-count", "1"),
+        ("activity-notes-ready-count", "11"),
+        ("activity-notes-unavailable-count", "2"),
+    ] {
+        assert!(elements.iter().any(|e| e.key.as_deref() == Some(key) && e.text.as_deref() == Some(value)));
+    }
+}
+
+#[test]
 fn activity_labels_lead_and_counts_align_right_without_losing_status_messages() {
     for dark in [false, true] {
         let mut rt = runtime((1024., 640.));
@@ -3955,6 +4264,106 @@ fn inventory_window_mounts_only_nearby_rows_and_keeps_selection_through_jumps() 
     assert!(rt.find(&format!("inventory-row-{last}")).is_none());
     assert!(!rt.state.inventory.work.is_pending());
     assert!(rt.state.inventory.discovery.iter().all(|work| !work.is_pending()));
+}
+
+#[test]
+fn inventory_table_sorts_every_header_with_mixed_version_formats() {
+    use crate::inventory_workspace::{Column, filtered};
+
+    let snapshot = std::env::var_os("CHRONVER_TEST_INVENTORY_SNAPSHOT");
+    let mut rt = runtime((1440., 800.));
+    rt.update(|s, tx| {
+        if let Some(path) = &snapshot {
+            for scan in releasescout_engine::matching::load_snapshot(std::path::Path::new(path))
+                .expect("test inventory snapshot")
+            {
+                s.accept_scan(scan);
+            }
+        } else {
+            crate::inventory_view::scene(s);
+            let mut scan = s.inventory.selected_scan().unwrap().clone();
+            let template = scan.packages[0].clone();
+            let versions = [
+                Some("2.0"),
+                Some("10.0"),
+                Some("1x"),
+                Some("r100"),
+                Some("r99"),
+                Some("1.4.1_2"),
+                Some("1.4.1_10"),
+                Some("< 9.0"),
+                Some("4.0-rc.2"),
+                Some("4.0"),
+                Some("1.2.3.4.g85e641b4"),
+                Some("1.2.3.5.g806b5b27"),
+                None,
+            ];
+            scan.packages = (0..320)
+                .map(|i| {
+                    let mut p = template.clone();
+                    p.id = format!("sort-fixture-{i:03}");
+                    p.name = format!("Sort Fixture {:03}", 319 - i);
+                    p.installed = versions[(i * 7 + i / 9) % versions.len()].map(str::to_owned);
+                    p.available = versions[(i * 11 + i / 5) % versions.len()].map(str::to_owned);
+                    p.source = format!("bucket-{}", i % 3);
+                    p.scope = (if i % 2 == 0 { "user" } else { "machine" }).into();
+                    p
+                })
+                .collect();
+            s.accept_scan(scan);
+        }
+        s.inventory.open = true;
+        s.inventory.workspace.columns.extend(Column::OPTIONAL);
+        let key = filtered(s)[0].key.clone();
+        s.inventory.workspace.selected.insert(key);
+        tx.instant();
+    });
+    rt.frame(1.);
+    rt.update(|_, tx| tx.scroll_to_instant("inventory-scroll-area/scroll", 0., 2048.));
+    rt.frame(1.);
+    let count = filtered(&rt.state).len();
+    let selected = rt.state.inventory.workspace.selected.clone();
+    for column in [
+        Column::Name,
+        Column::Id,
+        Column::Status,
+        Column::Source,
+        Column::Scope,
+        Column::Candidate,
+        Column::Installed,
+    ] {
+        let before = rt.state.inventory.workspace.descending;
+        let already_selected = rt.state.inventory.workspace.sort == column;
+        let header = format!("inventory-sort-{column:?}");
+        let first_descending = already_selected && !before;
+        for descending in [first_descending, !first_descending] {
+            tap(&mut rt, &header);
+            assert_eq!(rt.state.inventory.workspace.sort, column);
+            assert_eq!(rt.state.inventory.workspace.descending, descending);
+            let rows = filtered(&rt.state);
+            assert_eq!(rows.len(), count);
+            assert_eq!(rt.state.inventory.workspace.selected, selected);
+            if snapshot.is_none() && matches!(column, Column::Installed | Column::Candidate) {
+                let mut versions: Vec<_> = rows
+                    .iter()
+                    .map(|row| match column {
+                        Column::Installed => row.package.installed.as_deref(),
+                        _ => row.package.available.as_deref(),
+                    })
+                    .collect();
+                versions.dedup();
+                assert_eq!(versions.pop(), Some(None));
+                let mut expected = [
+                    "2.0", "4.0-rc.2", "4.0", "10.0", "r99", "r100", "1.4.1_2", "1.4.1_10",
+                    "1.2.3.4.g85e641b4", "1.2.3.5.g806b5b27", "1x", "< 9.0",
+                ].map(Some);
+                if descending {
+                    expected.reverse();
+                }
+                assert_eq!(versions, expected);
+            }
+        }
+    }
 }
 
 #[test]
@@ -4671,6 +5080,35 @@ fn timeline_spine_connects_markers_and_dates_precede_titles() {
             assert!((date[0] - marker[0] - 32.0).abs() < 0.5);
             assert!(date[1] + date[3] <= title[1]);
         }
+    }
+}
+
+#[test]
+fn changelog_shows_the_saved_range_not_the_unsubmitted_filter_or_internal_id() {
+    for dark in [false, true] {
+        let mut rt = runtime((900., 640.));
+        rt.update(|s, _| {
+            crate::note_cache::saved_range_scene(s);
+            s.dark = dark;
+            s.engine_query().to = rune::TextEdit::new("9.0.0");
+        });
+        rt.frame(1.);
+        assert!(rt.find("engine-saved-notes").is_some());
+        let elements = rt.elements();
+        let range = elements.iter().find(|e| e.key.as_deref() == Some("engine-loaded-range")).unwrap();
+        let range_text: Vec<_> = elements.iter()
+            .filter(|e| e.path.starts_with(&range.path))
+            .filter_map(|e| e.text.as_deref())
+            .collect();
+        assert_eq!(range_text, ["2.0.0", "2.2.0"]);
+        assert!(!rt.accessibility_json().to_string().contains("version-notes"));
+        tap(&mut rt, "engine-details");
+        assert!(rt.accessibility_json().to_string().contains("version-notes"));
+        tap(&mut rt, "engine-details");
+        rt.update(|s, _| s.engine_query().restored = false);
+        rt.frame(1.);
+        assert!(rt.find("engine-loaded-range").is_some());
+        assert!(rt.find("engine-saved-notes").is_none());
     }
 }
 

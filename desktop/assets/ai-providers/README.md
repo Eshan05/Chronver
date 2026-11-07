@@ -1,0 +1,1 @@
+OpenAI, Claude and Gemini logo paths are from [Lobe Icons](https://github.com/lobehub/lobe-icons), package `@lobehub/icons-static-svg@1.104.0`. SVG wrappers were removed for Rune, which supplies the viewport and theme color. The included MIT license covers the asset source; the marks belong to their respective owners.

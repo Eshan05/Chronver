@@ -191,7 +191,7 @@ fn reference_document(input: &str) -> Option<String> {
     }
     Some(url.into())
 }
-fn github(input: &str) -> Option<(String, String, Option<String>)> {
+pub(crate) fn github(input: &str) -> Option<(String, String, Option<String>)> {
     let url = https(input)?;
     if url.host_str() != Some("github.com") {
         return None;

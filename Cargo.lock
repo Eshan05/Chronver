@@ -3295,6 +3295,7 @@ dependencies = [
  "pulldown-cmark",
  "raw-window-handle",
  "releasescout-engine",
+ "reqwest",
  "rune",
  "rune-kit",
  "serde",
@@ -3303,6 +3304,7 @@ dependencies = [
  "tempfile",
  "url",
  "windows-sys 0.59.0",
+ "zeroize",
 ]
 
 [[package]]

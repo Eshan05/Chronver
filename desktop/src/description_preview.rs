@@ -16,7 +16,7 @@ fn parser(source: &str) -> Parser<'_> {
 
 // Use parser source ranges, not Markdown-shaped regexes. Drop image-only wrappers too,
 // so linked badges and image-only list items leave no empty links or bullets behind.
-fn without_images(source: &str) -> Cow<'_, str> {
+pub(crate) fn without_images(source: &str) -> Cow<'_, str> {
     let mut ranges = vec![];
     let mut images = vec![];
     let mut containers: Vec<(usize, bool, bool)> = vec![];

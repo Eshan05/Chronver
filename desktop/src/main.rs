@@ -8,6 +8,9 @@
 
 mod activity;
 mod ai_menu;
+mod ai_models;
+mod ai_metadata;
+mod ai_summary;
 mod app_chrome;
 mod command;
 mod custom_icons;
@@ -34,6 +37,7 @@ mod native_acrylic;
 mod native_backdrop;
 mod native_frame;
 mod note_cache;
+mod note_prefetch;
 mod package_icons;
 mod package_info;
 mod package_ui;
@@ -70,6 +74,8 @@ fn headless() -> bool {
 fn main() {
     let app = rune::App::new(AppSpec {
         setup: Some(|s: &mut State, waker| {
+            s.ai.work.set_waker(waker.clone());
+            s.ai.metadata.set_waker(waker.clone());
             s.source_loader.work.set_waker(waker.clone());
             s.activity.save.set_waker(waker.clone());
             s.custom_icons.work.set_waker(waker.clone());
@@ -86,13 +92,16 @@ fn main() {
             s.inventory.snapshot.set_waker(waker.clone());
             s.note_cache.read.set_waker(waker.clone());
             s.note_cache.write.set_waker(waker.clone());
+            s.note_prefetch.set_waker(waker.clone());
             for work in &s.inventory.discovery { work.set_waker(waker.clone()); }
             if !headless() {
+                s.ai.model_file_enabled = true;
                 s.icon_loader.enabled=true;
                 s.icon_loader.network_enabled=true;
                 s.custom_icons.enabled=true;
                 s.source_loader.enabled=true;
                 s.note_cache.enabled=true;
+                s.note_prefetch.enabled=true;
                 if let Some(directory) = live::cache_directory().parent() {
                     s.live.load_local_settings(directory);
                 }
@@ -102,7 +111,7 @@ fn main() {
             }
         }),
         poll: Some(|s: &mut State, _, tx| {
-            if s.backdrop.sync(s.dark) | s.poll_engine() | s.poll_history() | s.poll_inventory() | s.poll_inventory_export() | s.poll_discovery() | s.poll_icons() | s.poll_custom_icons() | s.poll_package_icons() | s.poll_remote_icons() | s.poll_source_discovery() | s.poll_packages() | s.poll_watchlist() | s.poll_activity() | s.poll_note_cache() {
+            if s.backdrop.sync(s.dark) | s.poll_engine() | s.poll_history() | s.poll_inventory() | s.poll_inventory_export() | s.poll_discovery() | s.poll_icons() | s.poll_custom_icons() | s.poll_package_icons() | s.poll_remote_icons() | s.poll_source_discovery() | s.poll_packages() | s.poll_watchlist() | s.poll_activity() | s.poll_note_cache() | s.poll_note_prefetch() | s.ai.poll() {
                 command::refresh(s);
                 tx.instant();
                 true
@@ -117,6 +126,8 @@ fn main() {
         scenes: &[
             ("saved-gcloud-notes", note_cache::saved_scene),
             ("saved-gcloud-notes-light", |s|{note_cache::saved_scene(s);s.dark=false;}),
+            ("saved-note-range", note_cache::saved_range_scene),
+            ("saved-note-range-light", |s|{note_cache::saved_range_scene(s);s.dark=false;}),
             ("local-inventory-popover", reader_controls::inventory_scene),
             ("local-inventory-popover-light", |s|{reader_controls::inventory_scene(s);s.dark=false;}),
             ("local-inventory-technical", |s|{reader_controls::inventory_scene(s);s.reader_controls.inventory_technical=true;}),
@@ -138,6 +149,13 @@ fn main() {
             ("saved-inventory", saved_inventory_scene),
             ("sidebar-ai-menu", ai_menu::scene),
             ("sidebar-ai-menu-light", |s|{ai_menu::scene(s);s.dark=false;}),
+            ("ai-settings", |s|ai_menu::settings_scene(s,ai_summary::Provider::OpenAi)),
+            ("ai-settings-light", |s|{ai_menu::settings_scene(s,ai_summary::Provider::Claude);s.dark=false;}),
+            ("ai-settings-custom", |s|ai_menu::settings_scene(s,ai_summary::Provider::Custom)),
+            ("ai-reader-summary", ai_menu::reader_scene),
+            ("ai-reader-summary-light", |s|{ai_menu::reader_scene(s);s.dark=false;}),
+            ("ai-confirmation", ai_menu::preview_scene),
+            ("ai-confirmation-light", |s|{ai_menu::preview_scene(s);s.dark=false;}),
             ("sidebar-groups-extensions", |s|sidebar_groups::scene(s,true)),
             ("sidebar-groups-extensions-light", |s|{sidebar_groups::scene(s,true);s.dark=false;}),
             ("sidebar-groups-packages", |s|sidebar_groups::scene(s,false)),
@@ -322,6 +340,7 @@ fn main() {
             ("dark", |s| s.dark = true),
             ("light", |s| s.dark = false),
             ("global-chrome", app_chrome::scene),
+            ("update-note-activity", |s| { note_prefetch::activity_scene(s); s.chrome.status_pinned=true; }),
             ("sidebar-filters", sidebar_filters::scene),
             ("sidebar-update-colors", sidebar_info::update_colors_scene),
             ("sidebar-update-colors-light", |s| {sidebar_info::update_colors_scene(s);s.dark=false;}),

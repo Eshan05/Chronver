@@ -28,9 +28,17 @@ has one last-result file, capped at 8 MiB. A failed refresh cannot replace it.
 
 On selection, a matching saved result restores its actual query controls, report,
 provenance and pagination without parsing the downloaded source again. Older
-results still display as saved notes, with freshness marked unverified. Opening
-a package never fetches its notes. Use Load notes to request notes or Refresh
-to revalidate the source. An uncached selection has no notes until its first
+results still display as saved notes, with freshness marked unverified. At
+startup Chronver also prefetches installed-to-candidate notes for confirmed
+updates with a matching version-based source. The selected update goes first;
+at most three jobs run at once, with at most two per primary host. Fresh saved
+ranges bypass network fetching. Transient transport failures get up to two
+jittered backoff retries; HTTP rate-limit cooldowns still apply. Manual queries
+and Offline mode take precedence. The activity indicator shows when update notes
+are loading. Activity details count the update ranges ready from a fetch or
+saved result, and any attempts that returned no notes during this session.
+Use Load notes for other entries or Refresh
+to revalidate a source. An uncached selection otherwise has no notes until its first
 successful fetch creates the parsed snapshot.
 
 Identity includes the observation, installed/candidate versions, source profile,

@@ -5,6 +5,7 @@ use rune_kit::{Button, Kit, Loader, glyphs};
 use std::time::Duration;
 
 pub const DOCK_CLEARANCE: f32 = 52.;
+const NOTES_LOADING: &str = "Loading update notes";
 
 #[derive(Default)]
 pub struct Chrome {
@@ -123,6 +124,7 @@ fn busy(s: &State) -> bool {
         || s.live.work.is_pending()
         || s.live.history.is_pending()
         || s.source_loader.work.is_pending()
+        || s.note_prefetch.progress().active > 0
 }
 
 fn activity(s: &State, notices: usize) -> String {
@@ -137,6 +139,8 @@ fn activity(s: &State, notices: usize) -> String {
         "Fetching notes".into()
     } else if s.source_loader.work.is_pending() {
         "Finding sources".into()
+    } else if s.note_prefetch.progress().active > 0 {
+        NOTES_LOADING.into()
     } else if notices > 0 {
         crate::rich_select::count_label(notices, "notice")
     } else if s.dataset != Dataset::Detected {
@@ -195,6 +199,8 @@ fn tool(key: &str, glyph: &'static Icon, label: &str, k: &Kit) -> El {
 
 pub fn header(s: &State, k: &Kit, compact: bool) -> El {
     let notices = notice_messages(s).len();
+    let status = activity(s, notices);
+    let notes_loading = status == NOTES_LOADING;
     row()
         .key("global-controls")
         .gap(8.)
@@ -204,21 +210,34 @@ pub fn header(s: &State, k: &Kit, compact: bool) -> El {
             row()
                 .key("global-activity")
                 .role("button")
-                .label(if notices > 0 { "View notices" } else { "Open inventory activity" })
-                .help(activity(s, notices))
+                .label(if notes_loading {
+                    "Show update note activity"
+                } else if notices > 0 {
+                    "View notices"
+                } else {
+                    "Open inventory activity"
+                })
+                .help(&status)
+                .description(&status)
                 .focusable(true)
                 .h(28.)
-                .max_w(140.)
+                .max_w(if notes_loading { 164. } else { 140. })
                 .px(8.)
                 .gap(6.)
                 .center_y()
                 .radius(6.)
                 .hover(k.c.hover)
                 .focus_ring(1., -1., k.c.border_focus)
-                .on_press(open_inventory)
+                .on_press(move |s: &mut State| {
+                    if notes_loading {
+                        s.chrome.status_pinned = true;
+                    } else {
+                        open_inventory(s);
+                    }
+                })
                 .child(activity_icon(s, notices, k))
                 .children((!compact).then(|| {
-                    text(activity(s, notices))
+                    text(status)
                         .font(k.ty.text_xsmall)
                         .color(k.c.text_muted)
                         .truncate()
@@ -233,6 +252,10 @@ pub fn header(s: &State, k: &Kit, compact: bool) -> El {
             )
             .disabled(inventory_busy(s) > 0)
             .on_press(|s: &mut State| s.start_discovery()),
+        )
+        .child(
+            tool("global-ai-settings", &glyphs::SPARKLE, "AI settings", k)
+                .on_press_tx(crate::ai_menu::open_settings_tx),
         )
         .child(
             tool(
@@ -470,6 +493,38 @@ pub fn footer(s: &State, k: &Kit, inventory_counts: Option<(usize, usize)>) -> E
                 notice_messages(s).len().to_string(),
                 k,
             ));
+        let progress = s.note_prefetch.progress();
+        let ready = progress.loaded + progress.saved;
+        if progress.active > 0 {
+            metrics = metrics.child(count_row(
+                "activity-notes-loading",
+                &REFRESH,
+                "Update notes loading",
+                progress.active.to_string(),
+                k,
+            ));
+        }
+        if progress.active + ready + progress.unavailable > 0 {
+            metrics = metrics.child(
+                count_row(
+                    "activity-notes-ready",
+                    &glyphs::FILE_TEXT,
+                    "Update notes ready",
+                    ready.to_string(),
+                    k,
+                )
+                .help(format!("{} loaded, {} already saved", progress.loaded, progress.saved)),
+            );
+        }
+        if progress.unavailable > 0 {
+            metrics = metrics.child(count_row(
+                "activity-notes-unavailable",
+                &glyphs::FILE_TEXT,
+                "No update notes returned",
+                progress.unavailable.to_string(),
+                k,
+            ));
+        }
         details = details.child(metrics);
         if let Some(error) = &s.note_cache.error {
             details = details.child(
@@ -521,7 +576,7 @@ pub fn footer(s: &State, k: &Kit, inventory_counts: Option<(usize, usize)>) -> E
             .description(if let Some(count) = &status_count {
                 format!("{status_label}: {count}")
             } else {
-                s.status.clone()
+                status_label.clone()
             })
             .expanded(expanded)
             .focusable(true)

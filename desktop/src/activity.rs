@@ -61,6 +61,8 @@ pub struct Data {
     #[serde(default)]
     pub description_overrides: BTreeMap<String, String>,
     #[serde(default)]
+    pub name_overrides: BTreeMap<String, String>,
+    #[serde(default)]
     pub sidebar_filters: [crate::sidebar_filters::Facets; 3],
     #[serde(default)]
     sidebar_filter_defaults_set: bool,
@@ -144,6 +146,10 @@ fn validate(data: &Data) -> Result<(), String> {
         || data.source_checks.len() > 4096
         || data.icon_choices.len() > 10000
         || data.description_overrides.len() > 10000
+        || data.name_overrides.len() > 10000
+        || data.name_overrides.iter().any(|(key, name)| {
+            !valid_key(key) || crate::ai_metadata::name(name).as_deref() != Some(name.as_str())
+        })
         || data
             .description_overrides
             .iter()

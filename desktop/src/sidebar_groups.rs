@@ -168,7 +168,12 @@ impl State {
     fn dismiss_hidden_sidebar_overlays(&mut self) {
         let shown = shown(self);
         let contains = |id: &str| shown.iter().any(|&i| self.rows[i].id == id);
-        let close_ai = self.ai.open.as_ref().is_some_and(|o| !contains(&o.row));
+        let close_ai = self
+            .ai
+            .open
+            .as_ref()
+            .and_then(|open| open.row.as_deref())
+            .is_some_and(|row| !contains(row));
         let close_panel = self
             .sidebar_actions
             .panel

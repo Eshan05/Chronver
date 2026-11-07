@@ -67,6 +67,55 @@ impl Version {
     }
 }
 
+fn revision(v: &str) -> Option<&str> {
+    v.strip_prefix('r')
+        .filter(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
+}
+
+fn package_revision(v: &str) -> Option<(Version, u64)> {
+    let (core, rev) = v.rsplit_once('_')?;
+    if rev.is_empty() || !rev.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    Some((
+        Version::parse(core, Scheme::Numeric).ok()?,
+        rev.parse().ok()?,
+    ))
+}
+
+fn git_build(v: &str) -> Option<(Version, &str)> {
+    let (core, hash) = v.rsplit_once(".g")?;
+    if !(4..=40).contains(&hash.len()) || !hash.bytes().all(|b| b.is_ascii_hexdigit()) {
+        return None;
+    }
+    Some((Version::parse(core, Scheme::Numeric).ok()?, hash))
+}
+
+/// A total order for displaying mixed inventory versions, not evidence of an upgrade.
+pub fn inventory_sort_key(input: &str) -> impl Ord + '_ {
+    type Numeric = (Vec<u64>, semver::Prerelease);
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    enum Key<'a> {
+        Numeric(Numeric),
+        Revision(u64),
+        PackageRevision(Numeric, u64),
+        GitBuild(Numeric, &'a str),
+        Label(&'a str),
+    }
+    let input = input.trim();
+    if let Ok(Version::Numeric(parts, pre)) = Version::parse(input, Scheme::Numeric) {
+        Key::Numeric((parts, pre))
+    } else if let Some(rev) = revision(input).and_then(|n| n.parse().ok()) {
+        Key::Revision(rev)
+    } else if let Some((Version::Numeric(parts, pre), rev)) = package_revision(input) {
+        Key::PackageRevision((parts, pre), rev)
+    } else if let Some((Version::Numeric(parts, pre), hash)) = git_build(input) {
+        Key::GitBuild((parts, pre), hash)
+    } else {
+        Key::Label(input)
+    }
+}
+
 /// Inventory precedence, without relaxing a release stream's configured version scheme.
 /// Returns the candidate's order relative to the installed version; unknown stays unknown.
 pub fn candidate_order(installed: &str, candidate: &str) -> Option<Ordering> {
@@ -93,34 +142,13 @@ pub fn candidate_order(installed: &str, candidate: &str) -> Option<Ordering> {
         let order = numeric_order(bound, candidate)?;
         return (order.is_gt() || (exclusive && order.is_eq())).then_some(Ordering::Greater);
     }
-    fn revision(v: &str) -> Option<&str> {
-        v.strip_prefix('r')
-            .filter(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))
-    }
     if let (Some(from), Some(to)) = (revision(installed), revision(candidate)) {
         return numeric_order(from, to);
     }
-    let package_revision = |v: &str| -> Option<(Version, u64)> {
-        let (core, rev) = v.rsplit_once('_')?;
-        if rev.is_empty() || !rev.bytes().all(|b| b.is_ascii_digit()) {
-            return None;
-        }
-        Some((
-            Version::parse(core, Scheme::Numeric).ok()?,
-            rev.parse().ok()?,
-        ))
-    };
     if let (Some((from, fr)), Some((to, tr))) =
         (package_revision(installed), package_revision(candidate))
     {
         return Some(to.compare(&from).then_with(|| tr.cmp(&fr)));
-    }
-    fn git_build(v: &str) -> Option<(Version, &str)> {
-        let (core, hash) = v.rsplit_once(".g")?;
-        if !(4..=40).contains(&hash.len()) || !hash.bytes().all(|b| b.is_ascii_hexdigit()) {
-            return None;
-        }
-        Some((Version::parse(core, Scheme::Numeric).ok()?, hash))
     }
     if let (Some((from, fh)), Some((to, th))) = (git_build(installed), git_build(candidate)) {
         let order = to.compare(&from);
@@ -132,6 +160,43 @@ pub fn candidate_order(installed: &str, candidate: &str) -> Option<Ordering> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn inventory_sort_orders_mixed_formats_without_inferring_updates() {
+        let mut versions = [
+            "1x",
+            "r100",
+            "2.0",
+            "1.4.1_10",
+            "< 9.0",
+            "4.0",
+            "r99",
+            "1.2.3.5.g806b5b27",
+            "10.0",
+            "1.2.3.4.g85e641b4",
+            "4.0-rc.2",
+            "1.4.1_2",
+        ];
+        versions.sort_by_cached_key(|&version| inventory_sort_key(version));
+        assert_eq!(
+            versions,
+            [
+                "2.0",
+                "4.0-rc.2",
+                "4.0",
+                "10.0",
+                "r99",
+                "r100",
+                "1.4.1_2",
+                "1.4.1_10",
+                "1.2.3.4.g85e641b4",
+                "1.2.3.5.g806b5b27",
+                "1x",
+                "< 9.0",
+            ]
+        );
+        assert_eq!(candidate_order("2.0", "1x"), None);
+    }
+
     #[test]
     fn inventory_formats_have_conservative_precedence_without_guessing_hashes_or_bounds() {
         for (from, to, expected) in [

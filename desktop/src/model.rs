@@ -186,6 +186,7 @@ struct SectionState {
 pub enum NoteMode {
     Rendered,
     Source,
+    Ai,
 }
 
 pub struct State {
@@ -204,6 +205,7 @@ pub struct State {
     pub activity: crate::activity::Activity,
     pub source_loader: crate::source_loader::Loader,
     pub note_cache: crate::note_cache::Cache,
+    pub note_prefetch: crate::note_prefetch::Prefetch,
     pub icon_loader: crate::icon_loader::Loader,
     pub icons: rune::ImageCache,
     pub icons_ready: usize,
@@ -231,6 +233,16 @@ pub struct State {
 }
 
 impl State {
+    pub fn display_name<'a>(&'a self, package: &'a Package) -> &'a str {
+        let names = &self.activity.data.name_overrides;
+        if names.is_empty() {
+            return &package.name;
+        }
+        names
+            .get(&crate::custom_icons::identity(package))
+            .map_or(package.name.as_str(), String::as_str)
+    }
+
     pub fn new() -> Self {
         let mut state = Self {
             backdrop: Default::default(),
@@ -248,6 +260,7 @@ impl State {
             activity: Default::default(),
             source_loader: Default::default(),
             note_cache: Default::default(),
+            note_prefetch: Default::default(),
             icon_loader: Default::default(),
             icons: rune::ImageCache::new(std::sync::Arc::new(|| {})),
             icons_ready: 0,
@@ -389,9 +402,9 @@ impl State {
                         p.id.clone()
                     },
                     name: if stress {
-                        format!("{} #{i:05}", p.name)
+                        format!("{} #{i:05}", self.display_name(p))
                     } else {
-                        p.name.clone()
+                        self.display_name(p).into()
                     },
                     package,
                     members: vec![package],
@@ -427,7 +440,7 @@ impl State {
                     group.members.push(row.package);
                     if p.display_priority < self.catalog.packages[group.package].display_priority {
                         group.package = row.package;
-                        group.name = p.name.clone();
+                        group.name = row.name;
                     }
                 } else {
                     positions.insert(key.clone(), grouped.len());

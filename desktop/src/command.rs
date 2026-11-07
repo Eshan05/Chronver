@@ -192,7 +192,7 @@ fn entries(s: &State) -> Vec<Entry> {
             .collect::<Vec<_>>()
             .join(" ");
         entries.push(Entry {
-            label: p.name.clone(),
+            label: s.display_name(p).into(),
             keywords: format!(
                 "{keywords} {detail} {context} {}",
                 providers
@@ -313,7 +313,7 @@ pub fn can_open(s: &State) -> bool {
     s.custom_icons.picker.is_none()
         && !s.custom_icons.dialog
         && s.description_editor.is_none()
-        && s.ai.preview.is_none()
+        && !s.ai.modal_open()
         && s.sidebar_actions.command.is_none()
         && s.sidebar_actions.brief.is_none()
         && s.inventory.workspace.review.is_none()

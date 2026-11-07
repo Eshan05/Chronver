@@ -186,7 +186,7 @@ pub fn records(s: &State) -> Vec<Record<'_>> {
                         index,
                         name: linked.map_or_else(
                             || crate::display_names::software(&p.name),
-                            |p| p.name.clone(),
+                            |p| s.display_name(p).into(),
                         ),
                         linked,
                         linked_index: binding.map(|(i, _)| i),
@@ -205,6 +205,13 @@ pub fn source_visible(s: &State, p: &InstalledPackage) -> bool {
                 .contains(&(p.manager.id().into(), p.source.clone())))
 }
 pub fn filtered(s: &State) -> Vec<Record<'_>> {
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    enum SortKey<V> {
+        Text(usize, String),
+        Version(V),
+        Missing,
+    }
+
     let w = &s.inventory.workspace;
     let query = s.inventory.filter.text.trim().to_lowercase();
     let mut rows: Vec<_> = records(s)
@@ -223,40 +230,45 @@ pub fn filtered(s: &State) -> Vec<Record<'_>> {
                     .contains(&query))
         })
         .map(|r| {
-            let (rank, text) = match w.sort {
-                Column::Name => (0, r.name.to_lowercase()),
-                Column::Id => (0, r.package.id.to_lowercase()),
-                Column::Installed => (0, r.package.installed.clone().unwrap_or_default()),
-                Column::Candidate => (0, r.package.available.clone().unwrap_or_default()),
+            let key = match w.sort {
+                Column::Name => SortKey::Text(0, r.name.to_lowercase()),
+                Column::Id => SortKey::Text(0, r.package.id.to_lowercase()),
+                Column::Installed | Column::Candidate => {
+                    let version = if w.sort == Column::Installed {
+                        r.package.installed.as_deref()
+                    } else {
+                        r.package.available.as_deref()
+                    };
+                    version
+                        .filter(|v| !v.trim().is_empty())
+                        .map_or(SortKey::Missing, |v| {
+                            SortKey::Version(releasescout_engine::version::inventory_sort_key(v))
+                        })
+                }
                 Column::Status => {
                     let status = crate::inventory_view::assessment(r.package, r.scan);
-                    (status.update as usize, status.label().into())
+                    SortKey::Text(status.update as usize, status.label().into())
                 }
-                Column::Source => (0, format!("{} / {}", r.package.manager.id(), r.package.source)),
-                Column::Scope => (0, r.package.scope.clone()),
+                Column::Source => {
+                    SortKey::Text(0, format!("{} / {}", r.package.manager.id(), r.package.source))
+                }
+                Column::Scope => SortKey::Text(0, r.package.scope.clone()),
             };
-            (r, rank, text)
+            (r, key)
         })
         .collect();
-    rows.sort_by(|(a, a_rank, left), (b, b_rank, right)| {
-        if matches!(w.sort, Column::Installed | Column::Candidate)
-            && left.is_empty() != right.is_empty()
-        {
-            return left.is_empty().cmp(&right.is_empty());
-        }
-        let order = if matches!(w.sort, Column::Installed | Column::Candidate) {
-            releasescout_engine::version::candidate_order(right, left)
-                .unwrap_or_else(|| left.cmp(right))
-        } else {
-            a_rank.cmp(b_rank).then_with(|| left.cmp(right))
+    rows.sort_by(|(a, left), (b, right)| {
+        let order = match (left, right) {
+            (SortKey::Missing, _) | (_, SortKey::Missing) => left.cmp(right),
+            _ if w.descending => right.cmp(left),
+            _ => left.cmp(right),
         };
-        let order = if w.descending { order.reverse() } else { order };
         order
             .then_with(|| a.package.manager.id().cmp(b.package.manager.id()))
             .then_with(|| a.package.source.cmp(&b.package.source))
             .then_with(|| a.key.cmp(&b.key))
     });
-    rows.into_iter().map(|(record, _, _)| record).collect()
+    rows.into_iter().map(|(record, _)| record).collect()
 }
 pub fn selected(s: &State) -> Vec<Record<'_>> {
     records(s)

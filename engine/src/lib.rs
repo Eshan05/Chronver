@@ -20,6 +20,7 @@ pub mod model;
 pub mod parse;
 pub mod presentation;
 pub mod source_discovery;
+pub mod publisher_metadata;
 pub mod version;
 pub mod watchlist;
 

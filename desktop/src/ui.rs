@@ -708,13 +708,13 @@ fn reader_header(s: &State, p: &Package, k: &Kit, layers: &mut Vec<El>) -> El {
                                         .min_w(0.)
                                         .gap(3.0)
                                         .child(
-                                            text(&p.name)
+                                            text(s.display_name(p))
                                                 .font(TextStyle::new(20.0, 600.0).lh(26.0))
                                                 .color(k.c.text_base)
                                                 .w_full()
                                                 .min_w(0.)
                                                 .truncate()
-                                                .help_when_truncated(&p.name)
+                                                .help_when_truncated(s.display_name(p))
                                                 .key("selected-package"),
                                         )
                                         .child(
@@ -1090,6 +1090,42 @@ fn evidence_toggle(details: bool, notices: usize, k: &Kit) -> El {
     .key("engine-details")
 }
 
+fn notes_context(query: &crate::live::Query, k: &Kit) -> Option<El> {
+    let bounds = query.report_cache.as_ref().and_then(crate::note_cache::Context::range_bounds);
+    if bounds.is_none() && !query.restored {
+        return None;
+    }
+    let mut context = row().key("engine-context").w_full().center_y().gap(8.);
+    if let Some((from, to)) = bounds {
+        let description = format!("Release notes after {from} through {to}");
+        context = context.child(
+            row()
+                .center_y()
+                .gap(6.)
+                .min_w(0.)
+                .shrink()
+                .help(&description)
+                .description(description)
+                .key("engine-loaded-range")
+                .child(small(from, k).font(k.ty.text_small.mono()).min_w(0.).truncate())
+                .child(icon(&glyphs::ARROW_RIGHT, 12.).color(k.c.icon_muted).a11y_hidden())
+                .child(small(to, k).font(k.ty.text_small.mono()).min_w(0.).truncate()),
+        );
+    }
+    if query.restored {
+        context = context.child(
+            small("Saved notes", k)
+                .px(6.)
+                .py(2.)
+                .radius(4.)
+                .fill(k.c.layer_02)
+                .help("Loaded from this device")
+                .key("engine-saved-notes"),
+        );
+    }
+    Some(context)
+}
+
 fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
     let Some(p) = s.selected() else {
         return col()
@@ -1125,6 +1161,8 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
     tabs_kit.c.bg_base = Color::TRANSPARENT;
     tabs_kit.c.border_base = Color::TRANSPARENT;
     tabs_kit.c.border_strong = Color::TRANSPARENT;
+    let note_modes = [NoteMode::Rendered, NoteMode::Source, NoteMode::Ai];
+    let selected_mode = note_modes.iter().position(|mode| *mode == s.mode).unwrap_or(0);
     let tabs = row()
         .w_full()
         .px(28.0)
@@ -1134,8 +1172,8 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
         .border_sides([1.0, 0.0, 1.0, 0.0], theme::separator(k))
         .child(
             SegmentedControl::new(
-                &["Changelog", "Markdown"],
-                Some(usize::from(s.mode == NoteMode::Source)),
+                &["Changelog", "Markdown", "AI"],
+                Some(selected_mode),
             )
             .label("Release note view")
             .segment_state(
@@ -1154,15 +1192,11 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
                     rune_kit::State::Rest
                 },
             )
-            .width(Some(200.0))
-            .on_pick(|s: &mut State, i, tx| {
+            .width(Some(300.0))
+            .on_pick(move |s: &mut State, i, tx| {
                 s.reader_controls.release_index_open = false;
                 s.reader_controls.reset_scroll();
-                s.mode = if i == 0 {
-                    NoteMode::Rendered
-                } else {
-                    NoteMode::Source
-                };
+                s.mode = note_modes[i];
                 tx.scroll_to_instant("release-notes", 0.0, 0.0);
             })
             .build(&tabs_kit)
@@ -1170,14 +1204,7 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
             .child(
                 el().w(100.0)
                     .h(2.0)
-                    .absolute(
-                        if s.mode == NoteMode::Source {
-                            100.0
-                        } else {
-                            0.0
-                        },
-                        40.0,
-                    )
+                    .absolute(selected_mode as f32 * 100.0, 40.0)
                     .fill(k.c.text_accent)
                     .a11y_hidden(),
             )
@@ -1211,13 +1238,21 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
         .px(28.)
         .py(24.);
     let query = &s.live.sessions[&p.id];
+    if s.mode == NoteMode::Ai {
+        return reader_frame(
+            s, p, k, cx, layers, tabs, document.py(16.).child(crate::ai_menu::reader(s, p, k)), None,
+        );
+    }
     let local_inventory = p.detected
         && p.extension.is_none()
         && p.dependency.is_none()
         && p.watchlist.is_none()
         && p.reference_text.is_some();
+    let prefetching = s.note_prefetch.loading(&p.id) && query.report.is_none();
     if s.live.active.as_deref() == Some(&p.id) {
         document = document.child(small("Fetching release notes...", k).key("engine-loading"));
+    } else if prefetching {
+        document = document.child(small("Loading notes for the available update...", k).key("prefetch-loading"));
     }
     if let Some(error) = &query.error {
         document = document.child(
@@ -1256,17 +1291,7 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
                 .gap(8.0)
                 .pb(24.0)
                 .key("engine-report")
-                .children((query.details || !query.caption.is_empty()).then(|| {
-                    small(
-                        if query.details {
-                            format!("{} / {}", query.caption, report.scope)
-                        } else {
-                            query.caption.clone()
-                        },
-                        k,
-                    )
-                    .wrap_anywhere()
-                }))
+                .children(notes_context(query, k))
                 .child(
                     row()
                         .w_full()
@@ -1309,6 +1334,17 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
                         )
                         .child(evidence_toggle(query.details, warnings.len(), k)),
                 )
+                .children(query.details.then(|| {
+                    col()
+                        .gap(3.)
+                        .key("engine-source-details")
+                        .children((!report.scope.is_empty()).then(|| {
+                            small(&report.scope, k).wrap_anywhere().selectable(true)
+                        }))
+                        .children((!query.caption.is_empty()).then(|| {
+                            small(&query.caption, k).wrap_anywhere().selectable(true)
+                        }))
+                }))
                 .children(
                     (query.details && !details.is_empty())
                         .then(|| small(details, k).wrap_anywhere().selectable(true)),
@@ -1396,7 +1432,7 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
                 );
         }
     }
-    if p.releases.is_empty() {
+    if p.releases.is_empty() && !prefetching {
         document = document.child(
             col()
                 .w_full()
@@ -1616,6 +1652,22 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
                 .key("load-older"),
         );
     }
+    reader_frame(
+        s, p, k, cx, layers, tabs, document,
+        wide_index.then(|| crate::release_index::rail(s, k, active)),
+    )
+}
+
+fn reader_frame(
+    s: &State,
+    p: &Package,
+    k: &Kit,
+    cx: &Cx<State>,
+    layers: &mut Vec<El>,
+    tabs: El,
+    document: El,
+    release_rail: Option<El>,
+) -> El {
     let notes_position = s.reader_controls.notes_position.clone();
     let notes_owner = p.id.clone();
     let reduced = cx.is_reduced_motion();
@@ -1663,7 +1715,7 @@ fn reader(s: &State, k: &Kit, layers: &mut Vec<El>, cx: &Cx<State>) -> El {
                         .min_w(0.)
                         .min_h(0.),
                 )
-                .children(wide_index.then(|| crate::release_index::rail(s, k, active))),
+                .children(release_rail),
         )
 }
 

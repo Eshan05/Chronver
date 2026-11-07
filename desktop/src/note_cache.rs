@@ -49,7 +49,7 @@ impl Selection {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Context {
     id: String,
@@ -57,6 +57,46 @@ pub struct Context {
     selection: Selection,
     local_file: Option<PathBuf>,
     components: usize,
+}
+
+impl Context {
+    pub(crate) fn for_version_range(mut self, from: &str, to: &str) -> Self {
+        self.selection.range = true;
+        self.selection.from = from.into();
+        self.selection.to = to.into();
+        self
+    }
+
+    pub(crate) fn identity(&self) -> &str {
+        &self.key
+    }
+
+    pub(crate) fn range_bounds(&self) -> Option<(&str, &str)> {
+        let from = self.selection.from.trim();
+        let to = self.selection.to.trim();
+        (self.selection.range && !from.is_empty() && !to.is_empty()).then_some((from, to))
+    }
+
+    pub fn matches_version_range(&self, from: &str, to: &str, query: &Query) -> bool {
+        self.selection.range
+            && self.selection.from.trim() == from.trim()
+            && self.selection.to.trim() == to.trim()
+            && self.selection.channel == query.channel
+            && self.selection.component == query.component
+    }
+}
+
+pub(crate) fn has_fresh_range(directory: &Path, expected: &Context) -> bool {
+    load(directory, expected).ok().flatten().is_some_and(|entry| {
+        let selection = &entry.context.selection;
+        selection.range
+            && selection.component == expected.selection.component
+            && selection.channel == expected.selection.channel
+            && selection.from.trim() == expected.selection.from.trim()
+            && selection.to.trim() == expected.selection.to.trim()
+            && entry.report.notes.iter().any(|note| note.authored_notes)
+            && entry.fresh(Utc::now())
+    })
 }
 
 pub fn context(s: &State, id: &str) -> Option<Context> {
@@ -214,6 +254,12 @@ impl Default for Cache {
             read_active: false,
             write_active: false,
         }
+    }
+}
+
+impl Cache {
+    pub(crate) fn directory(&self) -> &Path {
+        &self.directory
     }
 }
 
@@ -390,6 +436,17 @@ pub fn saved_scene(s: &mut State) {
     s.note_cache.enabled = false;
 }
 
+pub fn saved_range_scene(s: &mut State) {
+    crate::update_status::scene(s);
+    let id = s.selected().unwrap().id.clone();
+    let selection = context(s, &id).unwrap().for_version_range("2.0.0", "2.2.0");
+    let q = s.engine_query();
+    selection.selection.apply(q);
+    q.report_cache = Some(selection);
+    q.restored = true;
+    q.caption = "(2.0.0, 2.2.0] / version-notes / saved notes".into();
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -536,6 +593,40 @@ mod tests {
         assert!(!second.live.work.is_pending() && !second.live.history.is_pending());
         assert_eq!(before, fs::read(path).unwrap());
         assert!(second.note_cache.error.is_none());
+    }
+    #[test]
+    fn prefetch_reuses_only_fresh_exact_range_cache() {
+        let dir = tempfile::tempdir().unwrap();
+        let s = state(dir.path());
+        let id = s.selected().unwrap().id.clone();
+        let mut report = s.live.sessions[&id].report.clone().unwrap();
+        let guard = context(&s, &id).unwrap();
+        let range = guard.clone().for_version_range("1.0.0", "2.2.0");
+        let now = Utc::now();
+        for item in &mut report.evidence {
+            item.fetched_at = now.to_rfc3339();
+            item.cache = "network".into();
+        }
+        save(
+            dir.path(),
+            Entry {
+                revision: REVISION,
+                context: range.clone(),
+                saved_at: now,
+                report,
+                next: None,
+                feed: None,
+                caption: String::new(),
+                local_stamp: None,
+            },
+        )
+        .unwrap();
+        assert!(has_fresh_range(dir.path(), &range));
+        assert!(!has_fresh_range(dir.path(), &guard.for_version_range("1.0.0", "2.3.0")));
+        let mut entry = load(dir.path(), &range).unwrap().unwrap();
+        entry.saved_at -= chrono::Duration::seconds(TTL + 1);
+        save(dir.path(), entry).unwrap();
+        assert!(!has_fresh_range(dir.path(), &range));
     }
     #[test]
     fn cache_keeps_request_selection_and_pagination_not_later_draft_controls() {

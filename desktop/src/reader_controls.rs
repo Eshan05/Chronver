@@ -61,7 +61,7 @@ pub fn local_inventory(s: &State, k: &Kit, layers: &mut Vec<El>) -> El {
         .min_w(0.)
         .gap(5.)
         .child(
-            text(&p.name)
+            text(s.display_name(p))
                 .font(k.ty.ui_medium)
                 .color(k.c.text_base)
                 .wrap_anywhere(),

@@ -121,7 +121,7 @@ impl State {
         };
         let Some(plan) = plan(self, p) else { return };
         self.sidebar_actions.command = Some(Command {
-            name: p.name.clone(),
+            name: self.display_name(p).to_owned(),
             version: TextEdit::new(plan.record.available.as_deref().unwrap_or("")),
             plan,
         });
@@ -752,7 +752,7 @@ pub fn view(s: &State, k: &Kit, layers: &mut Vec<El>) {
                     .on_press_tx(move |s: &mut State, tx| {
                         tx.focus("sidebar-panel-ai-trigger", false);
                         s.ai.open = Some(crate::ai_menu::Open {
-                            row: row_id.clone(),
+                            row: Some(row_id.clone()),
                             package: brief_id.clone(),
                             key: "sidebar-panel-ai".into(),
                         });
