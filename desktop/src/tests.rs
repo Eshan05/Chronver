@@ -3073,15 +3073,27 @@ fn truncated_sidebar_descriptions_show_the_full_description_on_hover() {
     );
     rt.frame(0.45);
     assert!(rt.help_tooltip().is_none());
+    let elements = rt.elements();
+    let (popup_index, popup) = elements
+        .iter()
+        .enumerate()
+        .find(|(_, e)| e.key.as_deref() == Some("description-preview"))
+        .expect("description preview did not open");
+    let [_, _, w, h] = popup.rect;
+    assert!(w > desc.rect[2] && h > desc.rect[3]);
+    let full_text = desc.text.as_deref().unwrap();
     assert!(
-        rt.elements()
-            .iter()
-            .any(|e| e.key.as_deref() == Some("description-preview"))
-    );
-    assert!(
-        rt.elements()
-            .iter()
-            .any(|e| e.rect[2] > desc.rect[2] && e.text == desc.text)
+        elements.iter().any(|e| {
+            // Rune's Markdown renderer adds bidi isolates around compound words.
+            e.text.as_deref().is_some_and(|text| {
+                text.chars()
+                    .filter(|c| !matches!(c, '\u{2066}'..='\u{2069}'))
+                    .eq(full_text.chars())
+            }) && e.visible[3] >= e.rect[3] - 0.5
+                && std::iter::successors(e.parent, |&i| elements[i].parent)
+                    .any(|i| i == popup_index)
+        }),
+        "the full description must fit inside its preview"
     );
 }
 

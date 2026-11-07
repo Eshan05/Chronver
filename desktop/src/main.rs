@@ -72,6 +72,14 @@ fn headless() -> bool {
 }
 
 fn main() {
+    let native = !headless();
+    let native_material = cfg!(target_os = "windows")
+        && std::env::var_os("CHRONVER_NATIVE_BACKDROP").is_some_and(|value| value == "1");
+    #[cfg(target_os = "windows")]
+    if native_material && native && std::env::args_os().len() == 1 {
+        // Transparent windows cannot use Rune's CPU-first launch.
+        rune::warm_gpu(Default::default());
+    }
     let app = rune::App::new(AppSpec {
         setup: Some(|s: &mut State, waker| {
             s.ai.work.set_waker(waker.clone());
@@ -101,13 +109,12 @@ fn main() {
                 s.custom_icons.enabled=true;
                 s.source_loader.enabled=true;
                 s.note_cache.enabled=true;
-                s.note_prefetch.enabled=true;
                 if let Some(directory) = live::cache_directory().parent() {
                     s.live.load_local_settings(directory);
                 }
                 s.restore_project();
                 s.restore_activity();
-                s.startup_discovery();
+                s.restore_startup_inventory();
             }
         }),
         poll: Some(|s: &mut State, _, tx| {
@@ -361,13 +368,26 @@ fn main() {
         ..AppSpec::new(
             releasescout_engine::APP_NAME,
             (1280.0, 800.0),
-            if headless() { State::demo } else { State::new },
+            if native { State::new } else { State::demo },
             ui::view,
         )
     })
     .titlebar(rune::Titlebar::new(rune_kit::shell::TOOLBAR_HEIGHT))
     .tab_visits_controls(true);
-    native_backdrop::configure(app).run();
+    let app = native_backdrop::configure(app, native_material);
+    let app = if native {
+        let handle = app.handle();
+        app.on_ready(move |_| {
+            handle.update(|s, tx| {
+                s.note_prefetch.enabled = true;
+                s.startup_discovery();
+                tx.instant();
+            });
+        })
+    } else {
+        app
+    };
+    app.run();
 }
 
 fn readme_scene(s: &mut State) {

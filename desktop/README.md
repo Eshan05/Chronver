@@ -8,8 +8,9 @@ inventory, preferences and caches continue to work without migration.
 
 A bounded Windows UI trial, now connected to the shared Rust release-note engine.
 Rune and Rune Kit
-are pinned to `e970367bd7d2a51e2e7d58e2978ea32eac7780cb`; `Cargo.lock` pins the
-remaining dependencies. No upstream modifications, Node runtime, or WebView.
+are pinned to `9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb`; `Cargo.lock` pins the
+remaining dependencies. The workspace also pins Rune's upstream platform
+patches. There is no Node runtime or WebView.
 
 Typography uses bundled Geist for the interface and Geist Mono for code. Font
 files and their SIL Open Font License are in `assets/fonts/`; no system font
@@ -34,8 +35,14 @@ maximized/fullscreen geometry stay with Rune.
 Run `scripts/verify-native-frame.ps1` against the open app to check real DWM and
 client bounds; this is read-only and does not move, resize or capture the window.
 
-The header and sidebar try real Mica through `DWMWA_SYSTEMBACKDROP_TYPE`, then
-native Acrylic on Windows 10, using Rune's DirectComposition alpha surface. A
+The default Windows window is solid so Rune can draw the usable saved library
+on the CPU before DX12 is ready. After the first frame, Rune starts DX12 and
+hands over rendering without opening a new window.
+
+Launch with `CHRONVER_NATIVE_BACKDROP=1` to opt in to the translucent header and
+sidebar. This waits for the GPU before revealing the window. This mode tries
+Mica through `DWMWA_SYSTEMBACKDROP_TYPE`, then native Acrylic on Windows 10,
+using Rune's DirectComposition alpha surface. A
 neutral theme-aware tint is rendered over either material, so a compositor's
 opposite-theme fallback cannot wash out text. The notes pane stays solid.
 High contrast, disabled transparency, unavailable composition or rejected

@@ -8,8 +8,9 @@ does not invalidate saved data. See [branding](branding.md).
 
 ## Inventory
 
-Native startup loads the last saved inventory immediately. Automatic scans only
-run on open and are limited to one attempt per provider per rolling 24 hours.
+Native startup loads the last saved inventory for the first frame. Automatic
+scans are scheduled once the window is ready and are limited to one attempt
+per provider per rolling 24 hours.
 Recent installed snapshots count even if the candidate check was incomplete.
 Attempts are recorded separately from results, so an unavailable provider does
 not retry on every launch or erase its last successful inventory. Invalid or
@@ -28,8 +29,8 @@ has one last-result file, capped at 8 MiB. A failed refresh cannot replace it.
 
 On selection, a matching saved result restores its actual query controls, report,
 provenance and pagination without parsing the downloaded source again. Older
-results still display as saved notes, with freshness marked unverified. At
-startup Chronver also prefetches installed-to-candidate notes for confirmed
+results still display as saved notes, with freshness marked unverified. Once the
+window is ready, Chronver prefetches installed-to-candidate notes for confirmed
 updates with a matching version-based source. The selected update goes first;
 at most three jobs run at once, with at most two per primary host. Fresh saved
 ranges bypass network fetching. Transient transport failures get up to two

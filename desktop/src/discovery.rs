@@ -92,28 +92,36 @@ impl State {
         true
     }
     pub fn start_discovery(&mut self) {
+        self.inventory.discovery_errors.clear();
+        self.restore_startup_inventory();
         self.discover_inventory(true, &attempts_path());
+    }
+    pub fn restore_startup_inventory(&mut self) {
+        self.restore_inventory(&snapshot_path());
     }
     pub fn startup_discovery(&mut self) {
         self.discover_inventory(false, &attempts_path());
     }
-    fn discover_inventory(&mut self, force: bool, schedule: &Path) {
+    fn restore_inventory(&mut self, snapshot: &Path) {
         self.inventory.persist = true;
-        self.inventory.discovery_errors.clear();
-        // Headless scenes and model tests never call this native startup path.
         if self.inventory.scans.is_empty() {
-            match matching::load_snapshot(&snapshot_path()) {
+            match matching::load_snapshot(snapshot) {
                 Ok(scans) => {
                     self.inventory.scans = scans;
                     self.rebuild_detected();
                 }
-                Err(e) if snapshot_path().exists() => self
+                Err(e) if snapshot.exists() => self
                     .inventory
                     .discovery_errors
                     .push(format!("Saved inventory unavailable: {e}")),
                 Err(_) => {}
             }
         }
+        if !self.inventory.scans.is_empty() {
+            self.status = format!("Saved inventory / {}", self.inventory_summary());
+        }
+    }
+    fn discover_inventory(&mut self, force: bool, schedule: &Path) {
         self.status = "Discovering installed software...".into();
         let now = Utc::now();
         let mut attempts = load_attempts(schedule).unwrap_or_else(|error| {
@@ -699,6 +707,22 @@ mod tests {
     use super::*;
     use releasescout_engine::inventory::parse;
     use serde_json::json;
+    #[test]
+    fn saved_inventory_is_visible_before_discovery_is_scheduled() {
+        let directory = tempfile::tempdir().unwrap();
+        let snapshot = directory.path().join("inventory.json");
+        matching::save_snapshot(&snapshot, &[scoop("2.0.0")]).unwrap();
+
+        let mut state = State::new();
+        state.restore_inventory(&snapshot);
+
+        assert_eq!(state.inventory.scans.len(), 1);
+        assert_eq!(state.visible.len(), 2);
+        assert!(state.status.starts_with("Saved inventory"));
+        assert!(state.inventory.discovery.iter().all(|work| !work.is_pending()));
+        assert!(!state.inventory.snapshot_dirty);
+    }
+
     #[test]
     fn reopen_reuses_providers_within_a_day_and_manual_refresh_bypasses_it() {
         let now = chrono::Utc::now();

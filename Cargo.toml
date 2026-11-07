@@ -11,3 +11,12 @@ releasescout-engine = { path = "engine" }
 
 [profile.dev]
 debug = 0
+
+# Rune's vendored platform fixes must be patched by the consuming workspace.
+[patch.crates-io]
+accesskit_macos = { git = "https://github.com/anomalyco/rune", rev = "9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb" }
+accesskit_windows = { git = "https://github.com/anomalyco/rune", rev = "9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb" }
+parley_engine = { git = "https://github.com/anomalyco/rune", rev = "9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb" }
+sctk-adwaita = { git = "https://github.com/anomalyco/rune", rev = "9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb" }
+wgpu-hal = { git = "https://github.com/anomalyco/rune", rev = "9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb" }
+winit = { git = "https://github.com/anomalyco/rune", rev = "9553c9a7d7d1e5e038d14e0b313513e95b4fb8bb" }

@@ -1,6 +1,10 @@
 # Native Backdrops
 
-The shell tries native Mica first, then native Acrylic, then the solid neutral
+By default, the Windows shell is solid so Rune can show a working window before
+DX12 starts. Set `CHRONVER_NATIVE_BACKDROP=1` for the translucent shell; that
+mode waits for GPU initialization on startup.
+
+The translucent shell tries native Mica first, then native Acrylic, then the solid neutral
 fallback. Only a successful native call exposes the sidebar and header; the
 notes pane remains opaque. An 84%-opaque neutral tint over the material bounds its
 brightness independently of Windows' native fallback. Material-shell text also

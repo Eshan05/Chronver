@@ -9,12 +9,12 @@ pub struct Backdrop {
     applied_theme: Option<bool>,
 }
 
-pub fn configure(app: rune::App<State>) -> rune::App<State> {
+pub fn configure(app: rune::App<State>, use_material: bool) -> rune::App<State> {
     #[cfg(target_os = "windows")]
     {
         let handle = app.handle();
         app.window_options(rune::WindowOptions {
-            transparent: true,
+            transparent: use_material,
             ..Default::default()
         })
         .on_window(move |window| {
@@ -23,19 +23,24 @@ pub fn configure(app: rune::App<State>) -> rune::App<State> {
                 handle.update(|s, _| s.backdrop = Backdrop::default());
                 return;
             }
-            let window = window.clone();
-            handle.update(move |s, _| {
-                s.backdrop.window = Some(window);
-                s.backdrop.applied_theme = None;
-                s.backdrop.sync(s.dark);
-            });
+            if use_material {
+                let window = window.clone();
+                handle.update(move |s, _| {
+                    s.backdrop.window = Some(window);
+                    s.backdrop.applied_theme = None;
+                    s.backdrop.sync(s.dark);
+                });
+            }
         })
         .on_focus(|s, _, _| {
             s.backdrop.applied_theme = None;
         })
     }
     #[cfg(not(target_os = "windows"))]
-    app
+    {
+        let _ = use_material;
+        app
+    }
 }
 
 impl Backdrop {
