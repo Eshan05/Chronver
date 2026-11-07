@@ -1,0 +1,3157 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "id": "agent-browser",
+      "name": "Vercel Labs agent-browser",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Vercel Labs agent-browser only.",
+      "reference_urls": [
+        "https://github.com/vercel-labs/agent-browser/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Vercel Labs agent-browser candidate",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "vercel-labs",
+              "repo": "agent-browser",
+              "tag_prefix": "",
+              "max_pages": 3,
+              "tag_pattern": "(?:agent-browser@|v)?(?P<version>\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "angular-cli",
+      "name": "Angular CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release stream includes prereleases; distinguish stable releases if tracking stable channel.",
+      "reference_urls": [
+        "https://github.com/angular/angular-cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Angular CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "angular",
+              "repo": "angular-cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "agy",
+      "name": "Antigravity CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Keep CLI notes separate from Antigravity desktop/SDK.",
+      "reference_urls": [
+        "https://github.com/google-antigravity/antigravity-cli/blob/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Antigravity CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/google-antigravity/antigravity-cli/main/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "atlas-cli",
+      "name": "MongoDB Atlas CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "MongoDB Atlas CLI only; not Ariga Atlas.",
+      "reference_urls": [
+        "https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-changelog/"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "MongoDB Atlas CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://www.mongodb.com/docs/atlas/cli/current/atlas-cli-changelog/",
+              "format": "html",
+              "selector": "main",
+              "boundary": "Atlas CLI (?P<version>\\d+\\.\\d+\\.\\d+)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "aws-cli",
+      "name": "AWS CLI v2",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "AWS CLI v2 only; v1 has a separate release stream.",
+      "reference_urls": [
+        "https://github.com/aws/aws-cli/blob/v2/CHANGELOG.rst"
+      ],
+      "streams": []
+    },
+    {
+      "id": "bun",
+      "name": "Bun",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release post availability is distinct from binary/version availability.",
+      "reference_urls": [
+        "https://bun.com/blog",
+        "https://github.com/oven-sh/bun/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Bun runtime/toolchain",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "oven-sh",
+              "repo": "bun",
+              "tag_prefix": "bun-",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "choco",
+      "name": "Choco",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Assumed Chocolatey CLI from alias; confirm intended product.",
+      "reference_urls": [
+        "https://github.com/chocolatey/choco/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Chocolatey CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "chocolatey",
+              "repo": "choco",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "clang",
+      "name": "Clang",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release notes may represent in-progress branch until tied to a released LLVM version.",
+      "reference_urls": [
+        "https://github.com/llvm/llvm-project/blob/main/clang/docs/ReleaseNotes.md"
+      ],
+      "streams": []
+    },
+    {
+      "id": "claude-code",
+      "name": "Claude Code",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Do not infer release-note coverage from product docs.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Claude Code CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cloudflared",
+      "name": "Cloudflared",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Tunnel CLI only.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/cloudflare/cloudflared/master/RELEASE_NOTES"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "cloudflared tunnel client",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/cloudflare/cloudflared/master/RELEASE_NOTES",
+              "format": "plain",
+              "boundary": "(?P<version>\\d{4}\\.\\d+\\.\\d+)\\s*"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "codex",
+      "name": "Codex",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Filter explicitly by Codex CLI; combined page also contains app/product/model announcements. Do not use desktop sections as CLI notes.",
+      "reference_urls": [
+        "https://learn.chatgpt.com/docs/changelog"
+      ],
+      "streams": [{"id":"main","scope":"Codex CLI only, not desktop or hosted product changes","basis":"version","scheme":"semver","channel":"stable","caveats":"","sources":[{"kind":"github","owner":"openai","repo":"codex","tag_prefix":"rust-","max_pages":1},{"kind":"document","url":"https://learn.chatgpt.com/docs/changelog","format":"html_entries","selector":"#codex-changelog-content li:is([data-codex-topics='codex-cli'],[data-codex-topics^='codex-cli,'],[data-codex-topics$=',codex-cli'],[data-codex-topics*=',codex-cli,'])","boundary":"Codex CLI (?P<version>[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?)"}]}]
+    },
+    {
+      "id": "convex",
+      "name": "Convex",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "CLI and JS-client changes share a package changelog. Backend server releases are separate.",
+      "reference_urls": [
+        "https://github.com/convex/convex-js/blob/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Convex npm CLI and JS client",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/convex/convex-js/main/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "curl",
+      "name": "Curl",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "curl CLI and libcurl share versioning/release notes.",
+      "reference_urls": [
+        "https://curl.se/docs/reldocs.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "deno",
+      "name": "Deno",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "No note body verified in this pass.",
+      "reference_urls": [
+        "https://github.com/denoland/deno/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Deno CLI/runtime",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "denoland",
+              "repo": "deno",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ffmpeg",
+      "name": "FFMPEG",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Changelog and release notes may be separate documents.",
+      "reference_urls": [
+        "https://github.com/FFmpeg/FFmpeg/blob/master/Changelog",
+        "https://ffmpeg.org/download.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "fzf",
+      "name": "FZF",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "No note body verified in this pass.",
+      "reference_urls": [
+        "https://github.com/junegunn/fzf/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "fzf",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "junegunn",
+              "repo": "fzf",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gemini-cli",
+      "name": "Gemini CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "CLI release stream; distinguish nightly/prerelease from stable.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/changelogs/index.md",
+        "https://github.com/google-gemini/gemini-cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Gemini CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "google-gemini",
+              "repo": "gemini-cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gh",
+      "name": "GitHub CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Stable/prerelease stream should be filtered as needed.",
+      "reference_urls": [
+        "https://github.com/cli/cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "GitHub CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "cli",
+              "repo": "cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "git",
+      "name": "Git",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Core Git notes; Windows distribution patches belong to Git for Windows and may overlap git-bash entry.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/git/git/master/Documentation/RelNotes/2.51.0.adoc"
+      ],
+      "streams": []
+    },
+    {
+      "id": "glad",
+      "name": "GLAD 2",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "GLAD v2 generator only. Generated loaders are not independently versioned installations.",
+      "reference_urls": [
+        "https://github.com/Dav1dde/glad/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "GLAD/glad2 generator candidate",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "Dav1dde",
+              "repo": "glad",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "glew",
+      "name": "GLEW",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Project release log rather than necessarily formal release notes.",
+      "reference_urls": [
+        "https://glew.sourceforge.net/log.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "glfw",
+      "name": "GLFW",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release notes are part of version history.",
+      "reference_urls": [
+        "https://www.glfw.org/changelog"
+      ],
+      "streams": []
+    },
+    {
+      "id": "gcloud",
+      "name": "GCloud",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Google Cloud CLI (`gcloud`) scope.",
+      "reference_urls": [
+        "https://docs.cloud.google.com/sdk/docs/release-notes"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Google Cloud CLI",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "Includes component changes shipped with each Google Cloud CLI release.",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://docs.cloud.google.com/sdk/docs/release-notes",
+              "format": "html",
+              "selector": ".devsite-article-body",
+              "boundary": "(?P<version>\\d+\\.\\d+\\.\\d+)\\s+\\((?P<date>\\d{4}-\\d{2}-\\d{2})\\)",
+              "date_formats": ["%Y-%m-%d"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "gel",
+      "name": "Gel database and CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Gel server and CLI version separately. The linked changelog is for the server, not the standalone CLI.",
+      "reference_urls": [
+        "https://docs.geldata.com/resources/changelog/6_x"
+      ],
+      "streams": []
+    },
+    {
+      "id": "jq",
+      "name": "JQ",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "GitHub page inspected directly.",
+      "reference_urls": [
+        "https://github.com/jqlang/jq/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "jq CLI",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "jqlang",
+              "repo": "jq",
+              "tag_prefix": "",
+              "max_pages": 3,
+              "tag_pattern": "jq-(?P<version>\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "k3d",
+      "name": "K3d",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Changelog and release entries contain versioned changes.",
+      "reference_urls": [
+        "https://github.com/k3d-io/k3d/blob/main/CHANGELOG.md",
+        "https://github.com/k3d-io/k3d/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "k3d CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "k3d-io",
+              "repo": "k3d",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "k9s",
+      "name": "K9s",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release notes vary in detail by release.",
+      "reference_urls": [
+        "https://github.com/derailed/k9s/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "K9s CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "derailed",
+              "repo": "k9s",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "make",
+      "name": "Make",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "GNU Make assumed only as candidate; Windows port/distribution and exact make implementation remain unconfirmed.",
+      "reference_urls": [
+        "https://lists.gnu.org/archive/html/info-gnu/2023-02/msg00011.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "mingw",
+      "name": "mingw-w64",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "mingw-w64 confirmed. Runtime/headers notes do not cover every GCC/Clang bundled toolchain component or distributor patch.",
+      "reference_urls": [
+        "https://www.mingw-w64.org/changelog/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "mise",
+      "name": "Mise",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Includes tool-registry changes as well as CLI behavior.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/jdx/mise/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "mise CLI",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/jdx/mise/main/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB & Tools",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "MongoDB Database Tools have an independent 100.x version series.",
+      "reference_urls": [
+        "https://www.mongodb.com/docs/manual/release-notes/8.0/",
+        "https://www.mongodb.com/docs/database-tools/release-notes/dbtools-100.20.0-changelog/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "mongosh",
+      "name": "MongoSH",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Separate from server, Compass and Database Tools.",
+      "reference_urls": [
+        "https://github.com/mongodb-js/mongosh/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "MongoDB Shell",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "mongodb-js",
+              "repo": "mongosh",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nasm",
+      "name": "NASM",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Manual URL redirected from nasmdocc.html to nasmac.html; choose released version rather than development documentation.",
+      "reference_urls": [
+        "https://www.nasm.us/doc/nasmac.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "nvm",
+      "name": "NVM for Windows",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use nvm-windows/nvm release stream; distinguish beta from stable. Do not substitute nvm-sh.",
+      "reference_urls": [
+        "https://github.com/nvm-windows/nvm/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "NVM for Windows candidate",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "nvm-windows",
+              "repo": "nvm",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "node-npm",
+      "name": "Node / NPM",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Node and npm versions differ; both streams must be tracked; example version not asserted current.",
+      "reference_urls": [
+        "https://nodejs.org/en/blog/release/v24.10.0",
+        "https://github.com/npm/cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "npm",
+          "scope": "npm CLI only",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "Node.js runtime is a separate component; its release-doc profile is not configured yet.",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "npm",
+              "repo": "cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neovim",
+      "name": "Neovim",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "NVChad configuration/plugin updates are distinct. This verifies Neovim core, not the full NVChad environment.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/neovim/neovim/v0.11.5/runtime/doc/news.txt",
+        "https://github.com/neovim/neovim/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Neovim core",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "neovim",
+              "repo": "neovim",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neon-cli",
+      "name": "Neon CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "CLI notes, not Neon hosted-service changelog; some releases have only dependency or packaging changes.",
+      "reference_urls": [
+        "https://github.com/neondatabase/neonctl/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Neon CLI neonctl",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "neondatabase",
+              "repo": "neonctl",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nestjs-cli",
+      "name": "NestJS CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Not Nest core framework release stream.",
+      "reference_urls": [
+        "https://github.com/nestjs/nest-cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Nest CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "nestjs",
+              "repo": "nest-cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nginx",
+      "name": "Nginx",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Stable and mainline branches need separate version selection; nginx.org/en/CHANGES-1.30 is a possible stable-branch path, not verified here.",
+      "reference_urls": [
+        "https://nginx.org/en/CHANGES"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "nginx",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://nginx.org/en/CHANGES",
+              "format": "plain",
+              "boundary": "Changes with nginx (?P<version>\\d+\\.\\d+\\.\\d+)\\s+(?P<date>\\d{1,2} [A-Za-z]{3} \\d{4})",
+              "date_formats": [
+                "%e %b %Y"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ngrok",
+      "name": "Ngrok",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Agent-only source, distinct from hosted gateway changes. Platform-specific and packaging changes share the feed.",
+      "reference_urls": [
+        "https://ngrok.com/docs/gateway/agent/changelog"
+      ],
+      "streams": []
+    },
+    {
+      "id": "nuxt-cli",
+      "name": "Nuxt CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Not the Nuxt framework release stream.",
+      "reference_urls": [
+        "https://github.com/nuxt/cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Nuxt CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "nuxt",
+              "repo": "cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ocu",
+      "name": "Open Computer Use (iFurySt)",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "iFurySt/open-computer-use only; other forks are not covered.",
+      "reference_urls": [
+        "https://github.com/iFurySt/open-computer-use/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Open Computer Use candidate",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "iFurySt",
+              "repo": "open-computer-use",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "oh-my-posh",
+      "name": "Oh my POSH",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Theme customization is configuration, not a separate app update stream.",
+      "reference_urls": [
+        "https://github.com/JanDeDobbeleer/oh-my-posh/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Oh My Posh",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "JanDeDobbeleer",
+              "repo": "oh-my-posh",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ollama",
+      "name": "Ollama",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Model downloads and app/runtime releases are distinct; release notes may emphasize supported models.",
+      "reference_urls": [
+        "https://github.com/ollama/ollama/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Ollama runtime/CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "ollama",
+              "repo": "ollama",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opencode",
+      "name": "OpenCode CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use CLI/core sections in shared upstream releases; desktop-only changes are separate.",
+      "reference_urls": [
+        "https://github.com/anomalyco/opencode/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "OpenCode CLI/core",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "anomalyco",
+              "repo": "opencode",
+              "tag_prefix": "",
+              "max_pages": 3,
+              "tag_pattern": "v?(?P<version>\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opengl-freeglut",
+      "name": "OpenGL / FreeGLUT",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "OpenGL is an API/specification, not an independently installed application; driver implementation/vendor has its own notes. Khronos history fetch returned 403.",
+      "reference_urls": [
+        "https://github.com/freeglut/freeglut/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "FreeGLUT component",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "freeglut",
+              "repo": "freeglut",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "playwright-mcp",
+      "name": "Playwright MCP",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Distinct from Playwright library/browser bundle; release notes may refer to minimum extension/browser versions.",
+      "reference_urls": [
+        "https://github.com/microsoft/playwright-mcp/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Microsoft Playwright MCP",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "microsoft",
+              "repo": "playwright-mcp",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pnpm",
+      "name": "pnpm",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "pnpm releases do not describe Corepack releases.",
+      "reference_urls": [
+        "https://github.com/pnpm/pnpm/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "pnpm package manager",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "pnpm",
+              "repo": "pnpm",
+              "tag_prefix": "",
+              "max_pages": 3,
+              "tag_pattern": "v?(?P<version>\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Select installed server major/minor branch; a source archive alone is not an implementation of version-range matching.",
+      "reference_urls": [
+        "https://www.postgresql.org/docs/release/",
+        "https://www.postgresql.org/docs/release/18.0/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "portless",
+      "name": "Portless",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Pre-1.0 CLI; changelog is maintained on main branch.",
+      "reference_urls": [
+        "https://github.com/vercel-labs/portless/blob/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Portless CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/vercel-labs/portless/main/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "name": "Python",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Per-version pages and linked detailed changelog are available. Installed Python branch/build/distribution remains unknown.",
+      "reference_urls": [
+        "https://www.python.org/downloads/release/python-3140/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "protoc",
+      "name": "Protobuf (Protoc)",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release notes cover Protobuf components/languages beyond the protoc executable; distinguish prereleases from stable.",
+      "reference_urls": [
+        "https://github.com/protocolbuffers/protobuf/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Protocol Buffers compiler protoc and ecosystem",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "protocolbuffers",
+              "repo": "protobuf",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "raylib",
+      "name": "Raylib",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release list includes dev tags; filter stable version tags if desired.",
+      "reference_urls": [
+        "https://github.com/raysan5/raylib/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "raylib library",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "raysan5",
+              "repo": "raylib",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "redis",
+      "name": "Redis",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Redis product has OSS and commercial/Enterprise release streams; this source is specifically Redis Open Source.",
+      "reference_urls": [
+        "https://redis.io/docs/latest/operate/oss_and_stack/stack-with-enterprise/release-notes/redisce/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "ripgrep",
+      "name": "Ripgrep",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "None noted.",
+      "reference_urls": [
+        "https://github.com/BurntSushi/ripgrep/releases",
+        "https://github.com/BurntSushi/ripgrep/blob/master/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "ripgrep CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "BurntSushi",
+              "repo": "ripgrep",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rustup",
+      "name": "Rustup (Rust)",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Treat rustup separately from Rust compiler releases.",
+      "reference_urls": [
+        "https://github.com/rust-lang/rustup/blob/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "rustup toolchain installer",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/rust-lang/rustup/main/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sed",
+      "name": "sed Windows port (exact distribution unspecified)",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Windows ports can have different releases from GNU sed. Verify the distributor before binding a profile.",
+      "reference_urls": [
+        "https://lists.gnu.org/archive/html/info-gnu/2026-04/msg00009.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "sdl3",
+      "name": "SDL 3",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Corrected malformed agent URL releases.html. Only core SDL3, not companion libraries.",
+      "reference_urls": [
+        "https://github.com/libsdl-org/SDL/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "SDL3 core library",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "libsdl-org",
+              "repo": "SDL",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scoop",
+      "name": "Scoop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Scoop package manifests are distinct from Scoop manager releases.",
+      "reference_urls": [
+        "https://github.com/ScoopInstaller/Scoop/releases",
+        "https://github.com/ScoopInstaller/Scoop/blob/master/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Scoop package manager",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "ScoopInstaller",
+              "repo": "Scoop",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sfml3",
+      "name": "SFML 3",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use SFML 3 entries, not earlier SFML 2 series.",
+      "reference_urls": [
+        "https://github.com/SFML/SFML/blob/master/changelog.md",
+        "https://github.com/SFML/SFML/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "SFML 3 library",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "SFML",
+              "repo": "SFML",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sudo",
+      "name": "Scoop sudo wrapper",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Scoop Main manifest points to lukesampson/psutils sudo.ps1, with a date/hash-based version derived from script commit feed. Not gsudo or Windows built-in sudo; commit history is not authored release notes.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/ScoopInstaller/Main/master/bucket/sudo.json"
+      ],
+      "streams": []
+    },
+    {
+      "id": "supabase",
+      "name": "Supabase hosted platform and CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Keep CLI version ranges separate from dated hosted-product changes. Hosted changelog can include SDK/library announcements; filter scope explicitly.",
+      "reference_urls": [
+        "https://github.com/supabase/cli/releases",
+        "https://supabase.com/changelog"
+      ],
+      "streams": [
+        {
+          "id": "cli",
+          "scope": "Supabase CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "supabase",
+              "repo": "cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        },
+        {
+          "id": "hosted",
+          "scope": "Supabase hosted/ecosystem product changes",
+          "basis": "date",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "Product/service changes, not installed CLI versions; ecosystem entries may include non-hosted components.",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://supabase.com/changelog",
+              "format": "html",
+              "selector": "main",
+              "boundary": "(?P<date>[A-Z][a-z]{2} \\d{1,2}, \\d{4})",
+              "date_formats": [
+                "%b %e, %Y"
+              ],
+              "paragraphs": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "superfile",
+      "name": "superfile terminal file manager",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "yorukot/superfile terminal file manager.",
+      "reference_urls": [
+        "https://github.com/yorukot/superfile/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "superfile terminal file manager candidate",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "yorukot",
+              "repo": "superfile",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "surrealdb",
+      "name": "SurrealDB",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release list mixes major version lines and beta tags; avoid interpreting tag order as simple semver chronology.",
+      "reference_urls": [
+        "https://github.com/surrealdb/surrealdb/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "SurrealDB database",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "surrealdb",
+              "repo": "surrealdb",
+              "tag_prefix": "",
+              "max_pages": 3
+            },
+            {
+              "kind":"linked_documents","url":"https://surrealdb.com/releases","links":"a[href]",
+              "version_pattern":"/releases/(?P<version>[0-9]+\\.[0-9]+)$",
+              "content":"div[id^='release-']","boundary":"(?P<version>[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?)",
+              "max_documents":6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tailcat-cli",
+      "name": "Tailcat CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Tailcat is both Go package and CLI; source release notes may include both.",
+      "reference_urls": [
+        "https://github.com/tailscale/tailcat/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Tailcat CLI and Go package",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "tailscale",
+              "repo": "tailcat",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tlmgr",
+      "name": "TLMGR",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Standalone versioned tlmgr notes have not been established.",
+      "reference_urls": [
+        "https://tug.org/texlive/relnotes.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "turbo",
+      "name": "Vercel Turborepo",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Turborepo confirmed; filter stable/canary channels in vercel/turborepo releases.",
+      "reference_urls": [
+        "https://github.com/vercel/turborepo/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "candidate: Turborepo repository/CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "vercel",
+              "repo": "turborepo",
+              "tag_prefix": "v",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "upm-cli",
+      "name": "UnJS upm",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "UnJS upm (upm.sh), not Unity Package Manager.",
+      "reference_urls": [
+        "https://github.com/unjs/upm/releases",
+        "https://raw.githubusercontent.com/unjs/upm/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "UnJS upm releases",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "unjs",
+              "repo": "upm",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "upstash-cli",
+      "name": "Upstash CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Package renamed to upstash in inspected release; registry metadata/version mapping needs validation.",
+      "reference_urls": [
+        "https://github.com/upstash/cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Upstash CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "upstash",
+              "repo": "cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "uv",
+      "name": "UV",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Astral's uv package manager.",
+      "reference_urls": [
+        "https://github.com/astral-sh/uv/releases",
+        "https://github.com/astral-sh/uv/blob/main/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Astral uv CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "astral-sh",
+              "repo": "uv",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vercel-cli",
+      "name": "Vercel CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use CLI package changelog, not @vercel/next adapter release. Package name is vercel; monorepo streams must be separated.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/vercel/vercel/main/packages/cli/CHANGELOG.md"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "vercel CLI package",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://raw.githubusercontent.com/vercel/vercel/main/packages/cli/CHANGELOG.md",
+              "format": "markdown",
+              "boundary": "v?\\[?(?P<version>\\d+\\.\\d+\\.\\d+(?:\\.\\d+)?(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?)\\]?(?:\\s*[-–(].*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vfox",
+      "name": "Vfox",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release feed verified.",
+      "reference_urls": [
+        "https://github.com/version-fox/vfox/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "vfox version manager",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "version-fox",
+              "repo": "vfox",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vue-cli-devtools",
+      "name": "Vue CLI/Devtools",
+      "tracking": "covered_elsewhere",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "This umbrella entry does not identify a single package. Vue CLI and Vue DevTools have independent npm identities.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/vuejs/vue-cli/dev/CHANGELOG.md",
+        "https://github.com/vuejs/devtools/releases"
+      ],
+      "streams": []
+    },
+    {
+      "id": "yarn",
+      "name": "Yarn",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Yarn Berry v4 only; Classic Yarn v1 releases are separate.",
+      "reference_urls": [
+        "https://yarnpkg.com/advanced/changelog"
+      ],
+      "streams": []
+    },
+    {
+      "id": "yq",
+      "name": "yq YAML/JSON processor (Mike Farah source selected)",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "mikefarah/yq only; other YAML processors also use the yq command name.",
+      "reference_urls": [
+        "https://github.com/mikefarah/yq/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Mike Farah yq YAML/JSON processor",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "mikefarah",
+              "repo": "yq",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yt-dlp",
+      "name": "YT-DLP",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Latest entries inspected have sparse notes; older entries contain detailed changelog.",
+      "reference_urls": [
+        "https://github.com/yt-dlp/yt-dlp/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "yt-dlp CLI",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "yt-dlp",
+              "repo": "yt-dlp",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zoxide",
+      "name": "Zoxide",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "None material.",
+      "reference_urls": [
+        "https://github.com/ajeetdsouza/zoxide/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "zoxide CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "ajeetdsouza",
+              "repo": "zoxide",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zrok2",
+      "name": "Zrok2",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use v2 release line; repo also contains legacy zrok history.",
+      "reference_urls": [
+        "https://github.com/openziti/zrok/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "zrok CLI v2",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "openziti",
+              "repo": "zrok",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jolt-battery",
+      "name": "Jolt - Battery",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Upstream documents macOS and Linux; the Windows product identity is unverified.",
+      "reference_urls": [
+        "https://github.com/jordond/jolt/releases"
+      ],
+      "streams": []
+    },
+    {
+      "id": "speedtest-cli",
+      "name": "Ookla Speedtest CLI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Ookla Speedtest CLI, not Python sivel/speedtest-cli. The official download page does not establish versioned authored notes.",
+      "reference_urls": [
+        "https://www.speedtest.net/apps/cli"
+      ],
+      "streams": []
+    },
+    {
+      "id": "cloudflare-speed-cli",
+      "name": "Cloudflare Speed CLI",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Cloudflare-speed-cli is third-party, not a Cloudflare-authored client.",
+      "reference_urls": [
+        "https://github.com/kavehtehrani/cloudflare-speed-cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Third-party cloudflare-speed-cli candidate",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "kavehtehrani",
+              "repo": "cloudflare-speed-cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rovr",
+      "name": "Rovr",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Reference URL only; no reviewed source profile.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/NSPC911/rovr/master/CHANGELOG.md"
+      ],
+      "streams": []
+    },
+    {
+      "id": "oeis-tui",
+      "name": "OEIS TUI",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release artifacts do not by themselves establish authored notes.",
+      "reference_urls": [
+        "https://github.com/hako/oeis-tui/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "OEIS TUI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "hako",
+              "repo": "oeis-tui",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "android-studio",
+      "name": "Android Studio",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Reference URL only; no reviewed source profile.",
+      "reference_urls": [
+        "https://developer.android.com/studio/releases"
+      ],
+      "streams": []
+    },
+    {
+      "id": "arduino",
+      "name": "Arduino IDE",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Arduino IDE confirmed; distinguish installed IDE major line from Arduino CLI, firmware, boards and libraries.",
+      "reference_urls": [
+        "https://github.com/arduino/arduino-ide/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Arduino IDE 2.x candidate",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "arduino",
+              "repo": "arduino-ide",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "betterdiscord",
+      "name": "BetterDiscord",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Canary is also listed; distinguish pre-release channel from stable versions.",
+      "reference_urls": [
+        "https://github.com/BetterDiscord/BetterDiscord/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "BetterDiscord desktop client mod",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "BetterDiscord",
+              "repo": "BetterDiscord",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cheat-engine",
+      "name": "Cheat Engine",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Official site may mention post-release patches not reflected in public version tags.",
+      "reference_urls": [
+        "https://github.com/cheat-engine/cheat-engine/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Cheat Engine",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "cheat-engine",
+              "repo": "cheat-engine",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "chatgpt-desktop",
+      "name": "ChatGPT Desktop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Filter ChatGPT desktop app and Windows relevance; page also contains Codex CLI, mobile and general/model updates. Product rollouts are not always tied to one Windows binary version.",
+      "reference_urls": [
+        "https://learn.chatgpt.com/docs/changelog"
+      ],
+      "streams": [{"id":"desktop","scope":"Official ChatGPT desktop category, including historical Codex app entries","basis":"date","scheme":"semver","channel":"all","caveats":"The official desktop category uses the legacy codex-app topic and includes historical Codex app announcements and shared product updates. These dated announcements do not establish applicability to a specific installed Windows build.","sources":[{"kind":"document","url":"https://learn.chatgpt.com/docs/changelog","format":"html_entries","selector":"#codex-changelog-content li:is([data-codex-topics='codex-app'],[data-codex-topics^='codex-app,'],[data-codex-topics$=',codex-app'],[data-codex-topics*=',codex-app,'])","boundary":"(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})","paragraphs":true}]}]
+    },
+    {
+      "id": "cmake",
+      "name": "CMake",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use versioned release docs; development/stage docs can expose unreleased notes.",
+      "reference_urls": [
+        "https://cmake.org/cmake/help/latest/release/4.2.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "claude-desktop",
+      "name": "Claude Desktop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "The Cowork changelog also includes app-wide and Windows fixes. Check entry scope before attributing a change to the desktop app.",
+      "reference_urls": [
+        "https://claude.com/docs/cowork/changelog"
+      ],
+      "streams": [
+        {
+          "id": "app",
+          "scope": "Claude desktop app (General/Code/Cowork)",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://claude.com/docs/cowork/changelog",
+              "format": "html",
+              "selector": "main",
+              "boundary": "v(?P<version>\\d+\\.\\d+\\.\\d+)(?:\\s+.*)?",
+              "paragraphs": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cloudflare-warp",
+      "name": "Cloudflare WARP",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Source covers Cloudflare One/Zero Trust client; consumer WARP versus One client edition is unknown. Do not silently substitute enterprise-client notes.",
+      "reference_urls": [
+        "https://developers.cloudflare.com/cloudflare-one/changelog/cloudflare-one-client/",
+        "https://developers.cloudflare.com/cloudflare-one/team-and-resources/devices/cloudflare-one-client/download/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "codex-desktop",
+      "name": "Codex Desktop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use Codex app/desktop entries, never CLI rust-v releases; filter platform relevance. Historic source coverage is not proof every installed build has notes.",
+      "reference_urls": [
+        "https://learn.chatgpt.com/docs/changelog"
+      ],
+      "streams": []
+    },
+    {
+      "id": "db-beaver",
+      "name": "DBeaver Community Edition",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Community edition confirmed. Enterprise release stream is not selected.",
+      "reference_urls": [
+        "https://dbeaver.io/category/releases/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "diskinternals",
+      "name": "DiskInternals Linux Reader",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "DiskInternals Linux Reader, not other DiskInternals products. No reviewed source profile.",
+      "reference_urls": [
+        "https://www.diskinternals.com/linux-reader/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "docker-desktop",
+      "name": "Docker Desktop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Notes are for Docker Desktop, not Docker Engine/CLI.",
+      "reference_urls": [
+        "https://docs.docker.com/desktop/release-notes/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "draw-io",
+      "name": "Draw.io",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Desktop wraps draw.io core; source has desktop fixes plus link to core changes.",
+      "reference_urls": [
+        "https://github.com/jgraph/drawio-desktop/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "draw.io desktop",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "jgraph",
+              "repo": "drawio-desktop",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "easiercommit",
+      "name": "EasierCommit",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Reference repository only; no reviewed source profile.",
+      "reference_urls": [
+        "https://github.com/Eshan05/EasierCommit/releases"
+      ],
+      "streams": []
+    },
+    {
+      "id": "epic-games-launcher",
+      "name": "Epic Games Launcher",
+      "tracking": "track",
+      "identity": "candidate",
+      "alias_of": null,
+      "caveats": "Verify the launcher channel before binding a source profile.",
+      "reference_urls": [
+        "https://launcher.epicgames.com/release-notes"
+      ],
+      "streams": []
+    },
+    {
+      "id": "figma",
+      "name": "Figma",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Valid product update feed, not limited to Windows binary versions. Platform filtering is necessary: Desktop app labels can include macOS-only features.",
+      "reference_urls": [
+        "https://www.figma.com/release-notes/"
+      ],
+      "streams": [
+        {
+          "id": "product",
+          "scope": "Figma product releases",
+          "basis": "date",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "Product feed includes platform-specific features; not a desktop-binary range.",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://www.figma.com/release-notes/",
+              "format": "html",
+              "selector": "main",
+              "boundary": "(?P<date>[A-Z][a-z]{2}\\s+\\d{1,2},\\s+\\d{4})",
+              "date_formats": [
+                "%b %e, %Y"
+              ],
+              "paragraphs": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "name": "Files",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Stable and Preview streams may differ; use linked changelog for substantive detail.",
+      "reference_urls": [
+        "https://github.com/files-community/Files/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Files Windows file manager",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "files-community",
+              "repo": "Files",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "file-pilot",
+      "name": "File Pilot",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Track beta/Insider labels correctly; archive is split by year.",
+      "reference_urls": [
+        "https://filepilot.tech/starlog"
+      ],
+      "streams": []
+    },
+    {
+      "id": "firefox",
+      "name": "Firefox (+ DEV)",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Reference includes Firefox stable and Developer Edition; channel/version distinction matters. Do not substitute Android notes.",
+      "reference_urls": [
+        "https://www.firefox.com/en-US/firefox/notes/",
+        "https://www.firefox.com/en-US/firefox/beta/notes/"
+      ],
+      "streams": [
+        {"id":"stable","scope":"Firefox desktop stable, current release snapshot","basis":"version","scheme":"numeric","caveats":"Current official release page, not complete historical coverage.","sources":[{"kind":"document","url":"https://www.firefox.com/en-US/firefox/notes/","format":"html_entries","selector":"#main-content","date_formats":["%B %d, %Y"],"boundary":"(?P<version>[0-9]+\\.[0-9]+(?:\\.[0-9]+)?) Firefox.*"}]},
+        {"id":"developer","scope":"Firefox Beta and Developer Edition, current release line","basis":"version","scheme":"numeric","channel":"preview","caveats":"Follows the official latest beta redirect; one major release-line summary, not notes for every beta build. Does not establish installed/candidate build compatibility.","sources":[{"kind":"document","url":"https://www.firefox.com/en-US/firefox/beta/notes/","format":"html_entries","selector":"#main-content","date_formats":["%B %d, %Y"],"boundary":"(?P<version>[0-9]+\\.[0-9]+)beta Firefox.*"}]}
+      ]
+    },
+    {
+      "id": "flux",
+      "name": "F.lux",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Current update page reports 4.141 while notes page has 4.148; version metadata appears inconsistent, verify feed before automation.",
+      "reference_urls": [
+        "https://justgetflux.com/news/pages/v4/readme/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "git-bash",
+      "name": "Git Bash",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Git Bash is part of Git for Windows distribution. Avoid double-counting core Git and bundled Bash/distribution changes.",
+      "reference_urls": [
+        "https://raw.githubusercontent.com/git-for-windows/build-extra/main/ReleaseNotes.md"
+      ],
+      "streams": []
+    },
+    {
+      "id": "laragon",
+      "name": "Laragon",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Bundled PHP/Apache/etc. versions differ from Laragon's own version; no independent engine range inferred.",
+      "reference_urls": [
+        "https://github.com/leokhoa/laragon/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Laragon",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "leokhoa",
+              "repo": "laragon",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "minitool-partition-wizard",
+      "name": "MiniTool Partition Wizard",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Feature availability varies by paid edition.",
+      "reference_urls": [
+        "https://www.minitool.com/partition-manager/upgrade-history.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "modern-flyouts",
+      "name": "Modern Flyouts",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Reference repository only; no reviewed source profile.",
+      "reference_urls": [
+        "https://github.com/ModernFlyouts-Community/ModernFlyouts/releases"
+      ],
+      "streams": []
+    },
+    {
+      "id": "mongo-compass",
+      "name": "Mongo Compass",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Covers Compass desktop, separate from MongoDB server and database tools.",
+      "reference_urls": [
+        "https://www.mongodb.com/docs/compass/release-notes/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "notepads",
+      "name": "Notepads (0x7c13)",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "0x7c13/Notepads, not Microsoft Notepad.",
+      "reference_urls": [
+        "https://github.com/0x7c13/Notepads/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "0x7c13 Notepads candidate",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "0x7c13",
+              "repo": "Notepads",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "notion",
+      "name": "Notion",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Use official /releases for product changes. Developer changelog and changes-by-version are API/developer streams, not desktop binary versions. Releasebot is discovery-only, not source of truth.",
+      "reference_urls": [
+        "https://www.notion.com/releases"
+      ],
+      "streams": [
+        {
+          "id": "product",
+          "scope": "Notion product releases",
+          "basis": "date",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "Product feed, not the API/developer changelog or a desktop-binary version range.",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://www.notion.com/releases",
+              "format": "html",
+              "selector": "main",
+              "boundary": "(?P<date>[A-Z][a-z]+\\s+\\d{1,2},\\s+\\d{4})(?:\\d+\\.\\d+)?",
+              "date_formats": [
+                "%B %e, %Y"
+              ],
+              "paragraphs": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "opencode-desktop",
+      "name": "OpenCode reference (CLI confirmed; desktop unconfirmed)",
+      "tracking": "covered_elsewhere",
+      "identity": "confirmed",
+      "alias_of": "opencode",
+      "caveats": "This legacy identity points to OpenCode CLI. It is not a verified OpenCode Desktop release profile.",
+      "reference_urls": [
+        "https://github.com/anomalyco/opencode/releases"
+      ],
+      "streams": []
+    },
+    {
+      "id": "pdf24",
+      "name": "PDF24",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Source covers PDF24 Creator and its embedded Reader, not the online tools.",
+      "reference_urls": [
+        "https://creator.pdf24.org/changelog/en.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "pdfgear",
+      "name": "PDFGear",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Version/date history is established; individual patch notes may be generic. Previously understated as sparse due to insufficient inspection.",
+      "reference_urls": [
+        "https://www.pdfgear.com/whats-new/"
+      ],
+      "streams": [
+        {
+          "id": "windows",
+          "scope": "PDFgear Windows",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://www.pdfgear.com/whats-new/",
+              "format": "html",
+              "selector": "body",
+              "boundary": "Version\\s*(?P<version>\\d+\\.\\d+\\.\\d+)\\s+(?P<date>[A-Za-z]+\\s+\\d{1,2},?\\s+\\d{4})",
+              "date_formats": [
+                "%B %e, %Y",
+                "%B %e %Y"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "pgadmin4",
+      "name": "PGAdmin4",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Official announcement links per-version release notes; pgAdmin may run as desktop or server-hosted web app.",
+      "reference_urls": [
+        "https://www.pgadmin.org/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "podman",
+      "name": "Podman engine/CLI and Podman Desktop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Both components requested. Engine/CLI and Desktop have independent version streams; do not merge their ranges.",
+      "reference_urls": [
+        "https://github.com/podman-container-tools/podman/releases",
+        "https://github.com/podman-desktop/podman-desktop/releases"
+      ],
+      "streams": [
+        {
+          "id": "engine",
+          "scope": "Podman engine and CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "podman-container-tools",
+              "repo": "podman",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        },
+        {
+          "id": "desktop",
+          "scope": "Podman Desktop",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "podman-desktop",
+              "repo": "podman-desktop",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "postman",
+      "name": "Postman",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Postman CLI is distinct though now bundled with app in some versions; source is app release notes.",
+      "reference_urls": [
+        "https://www.postman.com/release-notes/postman-app/"
+      ],
+      "streams": [{"id":"app","scope":"Postman desktop app, not CLI","basis":"version","sources":[{"kind":"document","url":"https://mkt.cdn.postman.com/www-next/release-notes/app-release-notes.json","format":"json_markdown","selector":"/notes/*/content","date_formats":["%B %d, %Y"],"boundary":"Postman (?P<version>[0-9]+\\.[0-9]+\\.[0-9]+)"}]}]
+    },
+    {
+      "id": "powertoys",
+      "name": "PowerToys",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Keep stable and preview notes distinguished.",
+      "reference_urls": [
+        "https://github.com/microsoft/PowerToys/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Windows PowerToys stable and preview",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "microsoft",
+              "repo": "PowerToys",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "qbittorrent",
+      "name": "QBitTorrent",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Release feed contains substantive changes; libtorrent build variants can differ.",
+      "reference_urls": [
+        "https://www.qbittorrent.org/news"
+      ],
+      "streams": []
+    },
+    {
+      "id": "rainmeter",
+      "name": "Rainmeter",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Version-history HTML is suitable source.",
+      "reference_urls": [
+        "https://github.com/rainmeter/rainmeter-docs/blob/master/source/history.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "sharex",
+      "name": "ShareX",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "None noted.",
+      "reference_urls": [
+        "https://github.com/ShareX/sharex.github.io/blob/master/changelog.md"
+      ],
+      "streams": []
+    },
+    {
+      "id": "slack",
+      "name": "Slack",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Retain both streams. Product announcements describe features/rollouts; Windows notes identify binary versions and may use generic maintenance wording. Never map a workspace rollout to a binary version without evidence.",
+      "reference_urls": [
+        "https://slack.com/intl/en-in/help/articles/115004846068-Slack-updates-and-changes",
+        "https://slack.com/release-notes/windows"
+      ],
+      "streams": [
+        {
+          "id": "windows",
+          "scope": "Slack Windows desktop",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "document",
+              "url": "https://slack.com/release-notes/windows",
+              "format": "html",
+              "selector": "main",
+              "boundary": "Slack (?P<version>\\d+\\.\\d+\\.\\d+)(?:.*)?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spicetify",
+      "name": "Spicetify",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "CLI, Marketplace and Spotify updates are separate.",
+      "reference_urls": [
+        "https://github.com/spicetify/cli/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Spicetify CLI",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "spicetify",
+              "repo": "cli",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sumatrapdf",
+      "name": "SumatraPDF",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Changelog includes prerelease changes; distinguish from stable history.",
+      "reference_urls": [
+        "https://www.sumatrapdfreader.org/docs/Changelog"
+      ],
+      "streams": []
+    },
+    {
+      "id": "t3-code",
+      "name": "T3 Code",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Nightly channel; track stable separately if desired.",
+      "reference_urls": [
+        "https://github.com/pingdotgg/t3code/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "T3 Code desktop app",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "preview",
+          "caveats": "Versioned nightly builds only. Stable and maintainer-preview builds are intentionally excluded by the tag profile.",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "pingdotgg",
+              "repo": "t3code",
+              "tag_prefix": "",
+              "tag_pattern": "v?(?P<version>\\d+\\.\\d+\\.\\d+-nightly\\.\\d{8}\\.\\d+)",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "taskbarx",
+      "name": "TaskbarX",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Notes can be short and project activity is not inferred from historical releases.",
+      "reference_urls": [
+        "https://github.com/ChrisAnd1998/TaskbarX/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "TaskbarX",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "ChrisAnd1998",
+              "repo": "TaskbarX",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terminal-preview",
+      "name": "Windows Terminal Preview",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Preview channel confirmed. Shared microsoft/terminal feed contains stable and preview releases; filter correctly.",
+      "reference_urls": [
+        "https://github.com/microsoft/terminal/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Windows Terminal Preview",
+          "basis": "version",
+          "scheme": "numeric",
+          "channel": "preview",
+          "caveats": "Stable releases are excluded by the default preview channel; --channel all explicitly includes them.",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "microsoft",
+              "repo": "terminal",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "texmaker",
+      "name": "Texmaker",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Notes explicitly describe version-to-version changes.",
+      "reference_urls": [
+        "https://www.xm1math.net/texmaker/log.html"
+      ],
+      "streams": []
+    },
+    {
+      "id": "tor",
+      "name": "Tor Browser",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Tor Browser confirmed; use desktop platform changes, not standalone Tor daemon/Arti releases.",
+      "reference_urls": [
+        "https://blog.torproject.org/new-release-tor-browser-15021/"
+      ],
+      "streams": []
+    },
+    {
+      "id": "unigram",
+      "name": "Unigram",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Published notes may be sparse. Commit comparisons are not authored release notes.",
+      "reference_urls": [
+        "https://github.com/UnigramDev/Unigram/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Unigram",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "UnigramDev",
+              "repo": "Unigram",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vesktop",
+      "name": "Vesktop",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Shared cross-platform notes need Windows relevance filtering.",
+      "reference_urls": [
+        "https://github.com/Vencord/Vesktop/releases"
+      ],
+      "streams": [
+        {
+          "id": "main",
+          "scope": "Vesktop",
+          "basis": "version",
+          "scheme": "semver",
+          "channel": "stable",
+          "caveats": "",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "Vencord",
+              "repo": "Vesktop",
+              "tag_prefix": "",
+              "max_pages": 3
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vlc",
+      "name": "VLC",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Official versioned release highlights are primary. The detailed 3.0 branch NEWS fallback can contain empty unreleased sections and is not proof of publication.",
+      "reference_urls": [
+        "https://www.videolan.org/vlc/releases/",
+        "https://raw.githubusercontent.com/videolan/vlc/3.0.x/NEWS"
+      ],
+      "streams": [{"id":"main","scope":"VLC official versioned release highlights","basis":"version","sources":[{"kind":"linked_documents","url":"https://www.videolan.org/vlc/releases/","links":"a[href]","version_pattern":"/vlc/releases/(?P<version>[0-9]+\\.[0-9]+\\.[0-9]+)\\.html$","content":"section.features:first-of-type","max_documents":4},{"kind":"document","url":"https://raw.githubusercontent.com/videolan/vlc/3.0.x/NEWS","format":"plain","boundary":"Changes between [0-9.]+ and (?P<version>[0-9]+\\.[0-9]+\\.[0-9]+):"}]}]
+    },
+    {
+      "id": "vsc",
+      "name": "Visual Studio Code Insiders",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Insiders rolling notes are dated and in progress. Do not substitute stable notes or assume a monthly heading maps every daily build exactly.",
+      "reference_urls": [
+        "https://code.visualstudio.com/updates/v1_146"
+      ],
+      "streams": []
+    },
+    {
+      "id": "visual-studio",
+      "name": "Visual Studio",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Installed IDE year/channel is unknown; 2022 and 2026 histories differ. Page displays an authorization banner but public note content was fetched.",
+      "reference_urls": [
+        "https://learn.microsoft.com/en-us/visualstudio/releases/2026/release-notes"
+      ],
+      "streams": []
+    },
+    {
+      "id": "windirstat",
+      "name": "WinDirStat",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "GitHub release body is mainly downloads; fetch tagged CHANGELOG for useful details.",
+      "reference_urls": [
+        "https://github.com/windirstat/windirstat/blob/master/CHANGELOG.md"
+      ],
+      "streams": []
+    },
+    {
+      "id": "winrar",
+      "name": "WinRAR",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Includes beta and older stable notes; filter chosen channel.",
+      "reference_urls": [
+        "https://www.win-rar.com/latestnews.html?&L=0",
+        "https://www.rarlab.com/rarnew.htm"
+      ],
+      "streams": [{"id":"main","scope":"WinRAR Windows release notes","basis":"version","scheme":"numeric","sources":[{"kind":"document","url":"https://www.rarlab.com/rarnew.htm","format":"plain","selector":"pre","boundary":"Version (?P<version>[0-9]+\\.[0-9]+)(?: (?P<prerelease>beta [0-9]+))?"}]}]
+    },
+    {
+      "id": "wiztree",
+      "name": "WizTree",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "WizTreeMac is separate; don't apply its standalone version number to Windows.",
+      "reference_urls": [
+        "https://diskanalyzer.com/whats-new"
+      ],
+      "streams": []
+    },
+    {
+      "id": "x-mouse",
+      "name": "X-Mouse Button Control",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Highresolution Enterprises X-Mouse Button Control.",
+      "reference_urls": [
+        "https://www.highrez.co.uk/downloads/xmbc_changelog.htm"
+      ],
+      "streams": []
+    },
+    {
+      "id": "xodo",
+      "name": "Xodo PDF Reader",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Xodo PDF Reader, not PDF Studio or the mobile/web editions.",
+      "reference_urls": [
+        "https://feedback.xodo.com/support/solutions/articles/35000315891-xodo-pdf-reader-2026-0-0"
+      ],
+      "streams": []
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom",
+      "tracking": "track",
+      "identity": "confirmed",
+      "alias_of": null,
+      "caveats": "Desktop release notes must be scoped to Windows and the appropriate update channel, not service-only announcements.",
+      "reference_urls": [
+        "https://support.zoom.com/hc/en/article?id=zm_kb&sysparm_article=KB0061222"
+      ],
+      "streams": []
+    }
+  ]
+}

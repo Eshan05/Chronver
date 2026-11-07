@@ -1,0 +1,10 @@
+target/
+.releasescout-cache/
+artifacts/
+*.exe
+*.msi
+*.msix
+catalog-overrides.json
+!/docs/examples/catalog-overrides.json
+tracking.json
+

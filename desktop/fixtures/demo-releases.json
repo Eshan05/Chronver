@@ -1,0 +1,119 @@
+{
+  "captured": "2025-02-10T12:00:00Z",
+  "packages": [
+    {
+      "id": "powertoys",
+      "name": "PowerToys",
+      "repository": "https://example.invalid/demo/powertoys",
+      "releases": [
+        {
+          "version": "v9.2.0",
+          "published": "2025-02-08T12:00:00Z",
+          "url": "https://example.invalid/demo/powertoys/releases/tag/v9.2.0",
+          "markdown": "## Window layouts\n\n- Remember the last layout for the sample workspace.\n- Keep keyboard focus on the selected tile when switching monitors."
+        },
+        {
+          "version": "v9.1.0",
+          "published": "2025-01-22T12:00:00Z",
+          "url": "https://example.invalid/demo/powertoys/releases/tag/v9.1.0",
+          "markdown": "Add a preview of the selected layout before applying it."
+        }
+      ]
+    },
+    {
+      "id": "terminal",
+      "name": "Windows Terminal",
+      "repository": "https://example.invalid/demo/terminal",
+      "releases": [
+        {
+          "version": "v8.2.0",
+          "published": "2025-02-06T12:00:00Z",
+          "url": "https://example.invalid/demo/terminal/releases/tag/v8.2.0",
+          "markdown": "## Tabs\n\n- Keep titles visible when the sample session reconnects.\n- Restore the active tab after reopening a saved layout."
+        },
+        {
+          "version": "v8.1.0",
+          "published": "2025-01-20T12:00:00Z",
+          "url": "https://example.invalid/demo/terminal/releases/tag/v8.1.0",
+          "markdown": "Add a visual indicator for sample tabs running in the background."
+        }
+      ]
+    },
+    {
+      "id": "gh",
+      "name": "GitHub CLI",
+      "repository": "https://example.invalid/demo/gh",
+      "releases": [
+        {
+          "version": "v7.2.1",
+          "published": "2025-02-10T12:00:00Z",
+          "url": "https://example.invalid/demo/gh/releases/tag/v7.2.1",
+          "markdown": "## Workflow improvements\n\n- Resume a sample command without losing the selected workspace.\n- Print a concise hint when `--fixture-profile` is missing.\n\n[Example details](https://example.invalid/demo/details)"
+        },
+        {
+          "version": "v7.2.0",
+          "published": "2025-01-28T12:00:00Z",
+          "url": "https://example.invalid/demo/gh/releases/tag/v7.2.0",
+          "markdown": "## Configuration\n\nAllow two example workspaces to keep separate defaults."
+        }
+      ]
+    },
+    {
+      "id": "pnpm",
+      "name": "pnpm",
+      "repository": "https://example.invalid/demo/pnpm",
+      "releases": [
+        {
+          "version": "v10.2.0",
+          "published": "2025-02-07T12:00:00Z",
+          "url": "https://example.invalid/demo/pnpm/releases/tag/v10.2.0",
+          "markdown": "## Workspace status\n\n- Show which sample project owns a dependency.\n- Preserve the displayed order when an example workspace changes."
+        },
+        {
+          "version": "v10.1.0",
+          "published": "2025-01-23T12:00:00Z",
+          "url": "https://example.invalid/demo/pnpm/releases/tag/v10.1.0",
+          "markdown": "Group simulated registry warnings by project."
+        }
+      ]
+    },
+    {
+      "id": "uv",
+      "name": "uv",
+      "repository": "https://example.invalid/demo/uv",
+      "releases": [
+        {
+          "version": "0.8.2",
+          "published": "2025-02-06T12:00:00Z",
+          "url": "https://example.invalid/demo/uv/releases/tag/0.8.2",
+          "markdown": "## Environments\n\n- Report which sample environment was selected.\n- Keep a previous selection when rediscovering the examples."
+        },
+        {
+          "version": "0.8.1",
+          "published": "2025-01-21T12:00:00Z",
+          "url": "https://example.invalid/demo/uv/releases/tag/0.8.1",
+          "markdown": "Clarify the diagnostic for a missing fixture environment."
+        }
+      ]
+    },
+    {
+      "id": "ripgrep",
+      "name": "ripgrep",
+      "repository": "https://example.invalid/demo/ripgrep",
+      "releases": [
+        {
+          "version": "6.2.0",
+          "published": "2025-02-04T12:00:00Z",
+          "url": "https://example.invalid/demo/ripgrep/releases/tag/6.2.0",
+          "markdown": "## Search output\n\n- Keep sample matches aligned when line numbers have different lengths.\n- Summarize results from empty example directories."
+        },
+        {
+          "version": "6.1.0",
+          "published": "2025-01-18T12:00:00Z",
+          "url": "https://example.invalid/demo/ripgrep/releases/tag/6.1.0",
+          "markdown": "Add a separate display state for skipped sample files."
+        }
+      ]
+    }
+  ]
+}

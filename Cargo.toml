@@ -1,0 +1,13 @@
+[workspace]
+members = ["engine", "cli", "desktop"]
+default-members = ["engine", "cli"]
+resolver = "3"
+
+[workspace.package]
+license = "GPL-3.0-or-later"
+
+[workspace.dependencies]
+releasescout-engine = { path = "engine" }
+
+[profile.dev]
+debug = 0

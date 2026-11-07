@@ -1,0 +1,4 @@
+[
+  {"t": 0.0, "type": "tap", "key": "view-options-button"},
+  {"t": 0.2, "type": "move", "key": "view-options-item1"}
+]

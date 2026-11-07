@@ -1,0 +1,443 @@
+[
+  {
+    "manager": "pnpm",
+    "id": "@angular/cli",
+    "product": "angular-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "@google/gemini-cli",
+    "product": "gemini-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "@openai/codex",
+    "product": "codex",
+    "stream": null
+  },
+  {
+    "manager": "pnpm",
+    "id": "@anthropic-ai/claude-code",
+    "product": "claude-code",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "@nestjs/cli",
+    "product": "nestjs-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "@nuxt/cli",
+    "product": "nuxt-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "@playwright/mcp",
+    "product": "playwright-mcp",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "@upstash/cli",
+    "product": "upstash-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "agent-browser",
+    "product": "agent-browser",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "convex",
+    "product": "convex",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "neon",
+    "product": "neon-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "open-computer-use",
+    "product": "ocu",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "pnpm",
+    "product": "pnpm",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "portless",
+    "product": "portless",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "turbo",
+    "product": "turbo",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "upm",
+    "product": "upm-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "pnpm",
+    "id": "vercel",
+    "product": "vercel-cli",
+    "stream": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "gh",
+    "product": "gh",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "pnpm",
+    "product": "pnpm",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "bun",
+    "product": "bun",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "fzf",
+    "product": "fzf",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "jq",
+    "product": "jq",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "k3d",
+    "product": "k3d",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "k9s",
+    "product": "k9s",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "cloudflared",
+    "product": "cloudflared",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "deno",
+    "product": "deno",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "mise",
+    "product": "mise",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "mongosh",
+    "product": "mongosh",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "neovim",
+    "product": "neovim",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "nginx",
+    "product": "nginx",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "oh-my-posh",
+    "product": "oh-my-posh",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "opencode",
+    "product": "opencode",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "ripgrep",
+    "product": "ripgrep",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "rustup",
+    "product": "rustup",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "supabase",
+    "product": "supabase",
+    "stream": "cli",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "superfile",
+    "product": "superfile",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "surrealdb",
+    "product": "surrealdb",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "uv",
+    "product": "uv",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "yt-dlp",
+    "product": "yt-dlp",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "scoop",
+    "id": "zoxide",
+    "product": "zoxide",
+    "stream": "main",
+    "source": "main"
+  },
+  {
+    "manager": "winget",
+    "id": "GitHub.cli",
+    "product": "gh",
+    "stream": "main",
+    "source": "winget"
+  },
+  {
+    "manager": "winget",
+    "id": "Microsoft.PowerToys",
+    "product": "powertoys",
+    "stream": "main",
+    "source": "winget"
+  },
+  {
+    "manager": "winget",
+    "id": "Microsoft.WindowsTerminal.Preview",
+    "product": "terminal-preview",
+    "stream": "main",
+    "source": "winget"
+  },
+  {
+    "manager": "winget",
+    "id": "Microsoft.VisualStudioCode.Insiders",
+    "product": "vsc",
+    "stream": null,
+    "source": "winget"
+  },
+  {
+    "manager": "winget",
+    "id": "Podman.PodmanDesktop",
+    "product": "podman",
+    "stream": "desktop",
+    "source": "winget"
+  },
+  {
+    "manager": "scoop",
+    "id": "antigravity-cli",
+    "product": "agy",
+    "stream": "main",
+    "source": "main"
+  },
+  {"manager":"chocolatey","id":"chocolatey","product":"choco","stream":"main"},
+  {"manager":"chocolatey","id":"cmake.install","product":"cmake","stream":null},
+  {"manager":"chocolatey","id":"dbeaver","product":"db-beaver","stream":null},
+  {"manager":"chocolatey","id":"drawio","product":"draw-io","stream":"main"},
+  {"manager":"chocolatey","id":"mingw","product":"mingw","stream":null},
+  {"manager":"chocolatey","id":"mongodb-atlas","product":"atlas-cli","stream":"main"},
+  {"manager":"chocolatey","id":"mongodb-compass","product":"mongo-compass","stream":null},
+  {"manager":"chocolatey","id":"nginx","product":"nginx","stream":"main"},
+  {"manager":"chocolatey","id":"ngrok","product":"ngrok","stream":null},
+  {"manager":"chocolatey","id":"nvm.install","product":"nvm","stream":"main"},
+  {"manager":"chocolatey","id":"oh-my-posh","product":"oh-my-posh","stream":"main"},
+  {"manager":"chocolatey","id":"pgadmin4","product":"pgadmin4","stream":null},
+  {"manager":"chocolatey","id":"podman-desktop","product":"podman","stream":"desktop"},
+  {"manager":"chocolatey","id":"postgresql16","product":"postgresql","stream":null},
+  {"manager":"chocolatey","id":"postman","product":"postman","stream":null},
+  {"manager":"chocolatey","id":"protoc","product":"protoc","stream":"main"},
+  {"manager":"chocolatey","id":"python311","product":"python","stream":null},
+  {"manager":"chocolatey","id":"python313","product":"python","stream":null},
+  {"manager":"chocolatey","id":"python314","product":"python","stream":null},
+  {"manager":"chocolatey","id":"redis","product":"redis","stream":null},
+  {"manager":"chocolatey","id":"texmaker","product":"texmaker","stream":null},
+  {"manager":"chocolatey","id":"vlc.install","product":"vlc","stream":null},
+  {"manager":"chocolatey","id":"wiztree","product":"wiztree","stream":null},
+  {"manager":"pnpm","id":"@opencode/cli","product":"opencode","stream":"main"},
+  {"manager":"npm","id":"npm","product":"node-npm","stream":"npm"},
+  {"manager":"scoop","id":"aws","source":"main","product":"aws-cli","stream":null},
+  {"manager":"scoop","id":"curl","source":"main","product":"curl","stream":null},
+  {"manager":"scoop","id":"ffmpeg","source":"main","product":"ffmpeg","stream":null},
+  {"manager":"scoop","id":"gcloud","source":"extras","product":"gcloud","stream":null},
+  {"manager":"scoop","id":"make","source":"main","product":"make","stream":null},
+  {"manager":"scoop","id":"mongodb","source":"main","product":"mongodb","stream":null},
+  {"manager":"scoop","id":"mongosh","source":"extras","product":"mongosh","stream":"main"},
+  {"manager":"scoop","id":"nasm","source":"main","product":"nasm","stream":null},
+  {"manager":"scoop","id":"ollama","source":"main","product":"ollama","stream":"main"},
+  {"manager":"scoop","id":"pdfgear","source":"extras","product":"pdfgear","stream":"windows"},
+  {"manager":"scoop","id":"sed","source":"main","product":"sed","stream":null},
+  {"manager":"scoop","id":"speedtest-cli","source":"main","product":"speedtest-cli","stream":null},
+  {"manager":"scoop","id":"sudo","source":"main","product":"sudo","stream":null},
+  {"manager":"scoop","id":"tailcat","source":"main","product":"tailcat-cli","stream":"main"},
+  {"manager":"scoop","id":"vesktop","source":"extras","product":"vesktop","stream":"main"},
+  {"manager":"scoop","id":"vfox","source":"main","product":"vfox","stream":"main"},
+  {"manager":"scoop","id":"yarn","source":"main","product":"yarn","stream":null},
+  {"manager":"scoop","id":"yq","source":"main","product":"yq","stream":"main"},
+  {"manager":"scoop","id":"zrok","source":"extras","product":"zrok2","stream":"main"},
+  {"manager":"winget","id":"Kitware.CMake","source":"winget","product":"cmake","stream":null},
+  {"manager":"winget","id":"DBeaver.DBeaver.Community","source":"winget","product":"db-beaver","stream":null},
+  {"manager":"winget","id":"JGraph.Draw","source":"winget","product":"draw-io","stream":"main"},
+  {"manager":"winget","id":"VideoLAN.VLC","source":"winget","product":"vlc","stream":null},
+  {"manager":"winget","id":"AntibodySoftware.WizTree","source":"winget","product":"wiztree","stream":null},
+  {"manager":"winget","id":"Git.Git","source":"winget","product":"git","stream":null},
+  {"manager":"winget","id":"PostgreSQL.PostgreSQL.16","source":"winget","product":"postgresql","stream":null},
+  {"manager":"winget","id":"RARLab.WinRAR","source":"winget","product":"winrar","stream":null},
+  {"manager":"winget","id":"PostgreSQL.pgAdmin","source":"winget","product":"pgadmin4","stream":null},
+  {"manager":"winget","id":"MiniTool.PartitionWizard.Free","source":"winget","product":"minitool-partition-wizard","stream":null},
+  {"manager":"winget","id":"MongoDB.Compass.Full","source":"winget","product":"mongo-compass","stream":null},
+  {"manager":"winget","id":"RedHat.Podman","source":"winget","product":"podman","stream":"engine"},
+  {"manager":"winget","id":"JanDeDobbeleer.OhMyPosh","source":"winget","product":"oh-my-posh","stream":"main"},
+  {"manager":"winget","id":"DiskInternals.LinuxReader","source":"winget","product":"diskinternals","stream":null},
+  {"manager":"winget","id":"LeNgocKhoa.Laragon","source":"winget","product":"laragon","stream":"main"},
+  {"manager":"winget","id":"Rainmeter.Rainmeter","source":"winget","product":"rainmeter","stream":null},
+  {"manager":"winget","id":"Highresolution.X-MouseButtonControl","source":"winget","product":"x-mouse","stream":null},
+  {"manager":"winget","id":"MongoDB.MongoDBAtlasCLI","source":"winget","product":"atlas-cli","stream":"main"},
+  {"manager":"winget","id":"Texmaker.Texmaker","source":"winget","product":"texmaker","stream":null},
+  {"manager":"winget","id":"EpicGames.EpicGamesLauncher","source":"winget","product":"epic-games-launcher","stream":null},
+  {"manager":"winget","id":"Vencord.Vesktop","source":"winget","product":"vesktop","stream":"main"},
+  {"manager":"winget","id":"Notion.Notion","source":"winget","product":"notion","stream":"product"},
+  {"manager":"winget","id":"Figma.Figma","source":"winget","product":"figma","stream":"product"},
+  {"manager":"winget","id":"Voidstar.FilePilot","source":"winget","product":"file-pilot","stream":null},
+  {"manager":"winget","id":"Zoom.Zoom.EXE","source":"winget","product":"zoom","stream":null},
+  {"manager":"winget","id":"T3Tools.T3Code","source":"winget","product":"t3-code","stream":"main"},
+  {"manager":"winget","id":"Python.Python.3.2","source":"winget","product":"python","stream":null},
+  {"manager":"winget","id":"Python.Python.3.11","source":"winget","product":"python","stream":null},
+  {"manager":"winget","id":"Python.Python.3.14","source":"winget","product":"python","stream":null},
+  {"manager":"winget","id":"Ollama.Ollama","source":"winget","product":"ollama","stream":"main"},
+  {"manager":"winget","id":"JackieLiu.NotepadsApp","source":"winget","product":"notepads","stream":"main"},
+  {"manager":"winget","id":"ModernFlyouts.ModernFlyouts","source":"winget","product":"modern-flyouts","stream":null},
+  {"manager":"winget","id":"Anthropic.Claude","source":"winget","product":"claude-desktop","stream":"app"},
+  {"manager":"winget","id":"FilesCommunity.Files","source":"winget","product":"files","stream":"main"},
+  {"manager":"winget","id":"OpenAI.ChatGPT","source":"winget","product":"chatgpt-desktop","stream":null},
+  {"manager":"winget","id":"XPFD51H3VQZFM0","source":"msstore","product":"pdf24","stream":null},
+  {"manager":"winget","id":"XP8CBJ40XLBWKX","source":"msstore","product":"docker-desktop","stream":null},
+  {"manager":"winget","id":"XP89DCGQ3K6VLD","source":"msstore","product":"powertoys","stream":"main"},
+  {"manager":"store","id":"OpenAI.Codex_2p2nqsd0c76g0","source":"Appx registration","product":"chatgpt-desktop","stream":null},
+  {"manager":"store","id":"Claude_pzs8sxrjxfjjc","source":"Appx registration","product":"claude-desktop","stream":"app"},
+  {"manager":"store","id":"Files_1y0xx7n9077q4","source":"Appx registration","product":"files","stream":"main"},
+  {"manager":"store","id":"19282JackieLiu.Notepads-Beta_echhpq9pdbte8","source":"Appx registration","product":"notepads","stream":"main"},
+  {"manager":"store","id":"32669SamG.ModernFlyouts_pcy8vm99wrpcg","source":"Appx registration","product":"modern-flyouts","stream":null},
+  {"manager":"store","id":"Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe","source":"Appx registration","product":"terminal-preview","stream":"main"},
+  {"manager":"store","id":"5E8FC25E.XODODOCS_3v3sf0k6w2rec","source":"Appx registration","product":"xodo","stream":null},
+  {"manager":"store","id":"F.luxSoftwareLLC.f.lux_sw1dyjdkns7gt","source":"Appx registration","product":"flux","stream":null},
+  {"manager":"store","id":"19568ShareX.ShareX_egrzcvs15399j","source":"Appx registration","product":"sharex","stream":null},
+  {"manager":"store","id":"91750D7E.Slack_8she8kybcnzg4","source":"Appx registration","product":"slack","stream":"windows"},
+  {"manager":"store","id":"38833FF26BA1D.UnigramPreview_g9c9v27vpyspw","source":"Appx registration","product":"unigram","stream":"main"},
+  {"manager":"scoop","id":"go","product":"go","stream":null},
+  {"manager":"scoop","id":"gradle","product":"gradle","stream":null},
+  {"manager":"scoop","id":"innounp","product":"innounp","stream":null},
+  {"manager":"scoop","id":"openssl","product":"openssl","stream":null},
+  {"manager":"chocolatey","id":"texlive","product":"texlive","stream":null},
+  {"manager":"pnpm","id":"@dbml/cli","product":"dbml-cli","stream":null},
+  {"manager":"npm","id":"@dbml/cli","product":"dbml-cli","stream":null},
+  {"manager":"bun","id":"@dbml/cli","product":"dbml-cli","stream":null},
+  {"manager":"pnpm","id":"@kilocode/cli","product":"kilocode-cli","stream":null},
+  {"manager":"npm","id":"@kilocode/cli","product":"kilocode-cli","stream":null},
+  {"manager":"bun","id":"@kilocode/cli","product":"kilocode-cli","stream":null},
+  {"manager":"pnpm","id":"cline","product":"cline-cli","stream":null},
+  {"manager":"npm","id":"cline","product":"cline-cli","stream":null},
+  {"manager":"bun","id":"cline","product":"cline-cli","stream":null},
+  {"manager":"winget","id":"XP8K17RNMM8MTN","source":"msstore","product":"canva","stream":null},
+  {"manager":"chocolatey","id":"intellijidea-community","product":"intellij-community","stream":null},
+  {"manager":"winget","id":"JetBrains.IntelliJIDEA.Community","product":"intellij-community","stream":null},
+  {"manager":"winget","id":"Valve.Steam","product":"steam","stream":null},
+  {"manager":"chocolatey","id":"steam","product":"steam","stream":null},
+  {"manager":"winget","id":"EpicGames.EpicOnlineServices","product":"epic-online-services","stream":null},
+  {"manager":"winget","id":"EpicGames.EpicGamesLauncher","product":"epic-games-launcher","stream":null},
+  {"manager":"chocolatey","id":"miniconda3","product":"miniconda","stream":null},
+  {"manager":"winget","id":"Anaconda.Miniconda3","product":"miniconda","stream":null},
+  {"manager":"winget","id":"Zoom.Zoom.EXE","product":"zoom","stream":null},
+  {"manager":"winget","id":"Zoom.Zoom.MSI","product":"zoom","stream":null},
+  {"manager":"chocolatey","id":"zoom","product":"zoom","stream":null},
+  {"manager":"chocolatey","id":"visualstudio2019buildtools","product":"vs2019-buildtools","stream":null},
+  {"manager":"winget","id":"Microsoft.VisualStudio.2019.BuildTools","product":"vs2019-buildtools","stream":null},
+  {"manager":"scoop","id_pattern":"openjdk[0-9]*","product":"openjdk","stream":null},
+  {"manager":"chocolatey","id_pattern":"openjdk[0-9]*","product":"openjdk","stream":null},
+  {"manager":"local","publisher":"JetBrains s.r.o.","name_pattern":"IntelliJ IDEA Community Edition(?: [0-9.]+)?","product":"intellij-community","stream":null},
+  {"manager":"local","publisher":"Valve Corporation","name_pattern":"Steam","product":"steam","stream":null},
+  {"manager":"local","publisher":"Epic Games, Inc.","name_pattern":"Epic Online Services","product":"epic-online-services","stream":null},
+  {"manager":"local","publisher":"Epic Games, Inc.","name_pattern":"Epic Games Launcher(?: Prerequisites \\(x64\\))?","product":"epic-games-launcher","stream":null},
+  {"manager":"local","publisher":"Anaconda, Inc.","name_pattern":"Miniconda3(?: .*)?","product":"miniconda","stream":null},
+  {"manager":"local","publisher":"Zoom Video Communications, Inc.","name_pattern":"Zoom(?: Workplace)?","product":"zoom","stream":null},
+  {"manager":"local","publisher":"Oracle Corporation","name_pattern":"Java 8 Update [0-9]+(?: \\(64-bit\\))?","product":"java8-runtime","stream":null},
+  {"manager":"local","publisher":"hello@msty.ai","name_pattern":"MstyStudio(?: [0-9.]+)?","product":"msty-studio","stream":null},
+  {"manager":"local","publisher":"Postman","name_pattern":"Postman(?: x64)?(?: [0-9.]+)?","product":"postman","stream":null},
+  {"manager":"local","homepage":"https://windirstat.info/","name_pattern":"WinDirStat(?: [0-9.]+)?","product":"windirstat","stream":null},
+  {"manager":"local","publisher":"Mozilla","name_pattern":"Firefox Developer Edition(?: \\(.*\\))?","product":"firefox","stream":"developer","display_name":"Firefox Developer Edition"},
+  {"manager":"local","publisher":"Mozilla","name_pattern":"Mozilla Firefox(?: \\(.*\\))?","product":"firefox","stream":"stable","display_name":"Firefox"},
+  {"manager":"local","publisher":"TeX Live","name_pattern":"TeX Live [0-9]{4}","product":"texlive","stream":null}
+]

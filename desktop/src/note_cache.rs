@@ -1,0 +1,772 @@
+use crate::{live::Query, model::State};
+use chrono::{DateTime, Utc};
+use releasescout_engine::{HistoryCursor, Report};
+use rune::{Latest, TextEdit};
+use serde::{Deserialize, Serialize};
+use std::{
+    collections::{HashSet, VecDeque},
+    fs,
+    io::{Read, Write},
+    path::{Path, PathBuf},
+};
+
+// Bump when extraction semantics change independently of the source profile.
+const REVISION: u32 = 1;
+const LIMIT: usize = 8 * 1024 * 1024;
+const TTL: i64 = 15 * 60;
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Selection {
+    component: usize,
+    channel: usize,
+    range: bool,
+    from: String,
+    to: String,
+    extension_published: bool,
+    inventory_range: bool,
+}
+impl Selection {
+    fn capture(q: &Query) -> Self {
+        Self {
+            component: q.component,
+            channel: q.channel,
+            range: q.range,
+            from: q.from.text.clone(),
+            to: q.to.text.clone(),
+            extension_published: q.extension_published,
+            inventory_range: q.inventory_range,
+        }
+    }
+    fn apply(&self, q: &mut Query) {
+        q.component = self.component;
+        q.channel = self.channel;
+        q.range = self.range;
+        q.from = TextEdit::new(&self.from);
+        q.to = TextEdit::new(&self.to);
+        q.extension_published = self.extension_published;
+        q.inventory_range = self.inventory_range;
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Context {
+    id: String,
+    key: String,
+    selection: Selection,
+    local_file: Option<PathBuf>,
+    components: usize,
+}
+
+pub fn context(s: &State, id: &str) -> Option<Context> {
+    let p = s.catalog.packages.iter().find(|p| p.id == id)?;
+    let q = s.live.sessions.get(id)?;
+    let profile = s.live.catalog.packages.iter().find(|p| p.id == id);
+    let key = crate::activity::hash((
+        REVISION,
+        &p.id,
+        &p.installed,
+        &p.target,
+        profile,
+        &p.source_hints,
+        &p.extension,
+        &p.dependency,
+        &p.watchlist,
+        crate::activity::hash(std::env::var("GITHUB_TOKEN").unwrap_or_default()),
+    ));
+    Some(Context {
+        id: id.into(),
+        key,
+        selection: Selection::capture(q),
+        local_file: p.extension.as_ref().and_then(|e| e.changelog.clone()),
+        components: profile.map_or(1, |p| p.streams.len().max(1)),
+    })
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+struct Stamp {
+    bytes: u64,
+    modified: u128,
+}
+fn stamp(path: &Path) -> Option<Stamp> {
+    let m = fs::metadata(path).ok()?;
+    Some(Stamp {
+        bytes: m.len(),
+        modified: m
+            .modified()
+            .ok()?
+            .duration_since(std::time::UNIX_EPOCH)
+            .ok()?
+            .as_nanos(),
+    })
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Entry {
+    revision: u32,
+    context: Context,
+    saved_at: DateTime<Utc>,
+    report: Report,
+    next: Option<HistoryCursor>,
+    feed: Option<String>,
+    caption: String,
+    local_stamp: Option<Stamp>,
+}
+impl Entry {
+    fn fresh(&self, now: DateTime<Utc>) -> bool {
+        (0..TTL).contains(&(now.timestamp() - self.saved_at.timestamp()))
+            && self.report.evidence.iter().all(|e| {
+                !e.cache.starts_with("stale_cache")
+                    && e.cache != "offline_cache"
+                    && DateTime::parse_from_rfc3339(&e.fetched_at)
+                        .is_ok_and(|time| (0..TTL).contains(&(now.timestamp() - time.timestamp())))
+            })
+    }
+}
+
+fn cache_path(directory: &Path, context: &Context) -> PathBuf {
+    directory.join(format!("{}.json", crate::activity::hash(&context.id)))
+}
+
+fn load(directory: &Path, expected: &Context) -> Result<Option<Entry>, String> {
+    let file = match fs::File::open(cache_path(directory, expected)) {
+        Ok(file) => file,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(e.to_string()),
+    };
+    let mut bytes = Vec::new();
+    file.take(LIMIT as u64 + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|e| e.to_string())?;
+    if bytes.len() > LIMIT {
+        return Err("Saved notes exceed 8 MiB".into());
+    }
+    let entry: Entry = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
+    if entry.revision != REVISION
+        || entry.context.key != expected.key
+        || entry.context.id != expected.id
+        || entry.report.package != expected.id
+        || entry.context.selection.channel > 2
+        || entry.context.selection.component >= expected.components
+        || entry.context.local_file != expected.local_file
+        || entry.context.selection.from.len() > 1024
+        || entry.context.selection.to.len() > 1024
+        || entry.report.status == "source_failed"
+        || entry.saved_at > Utc::now()
+    {
+        return Ok(None);
+    }
+    if !entry.context.selection.extension_published
+        && let Some(path) = &entry.context.local_file
+        && (entry.local_stamp.is_none() || entry.local_stamp != stamp(path))
+    {
+        return Ok(None);
+    }
+    Ok(Some(entry))
+}
+
+fn save(directory: &Path, mut entry: Entry) -> Result<(), String> {
+    entry.local_stamp = entry
+        .context
+        .local_file
+        .as_deref()
+        .filter(|_| !entry.context.selection.extension_published)
+        .and_then(stamp);
+    let bytes = serde_json::to_vec(&entry).map_err(|e| e.to_string())?;
+    if bytes.len() > LIMIT {
+        return Err("Parsed notes exceed 8 MiB; result not persisted".into());
+    }
+    fs::create_dir_all(directory).map_err(|e| e.to_string())?;
+    let mut file = tempfile::NamedTempFile::new_in(directory).map_err(|e| e.to_string())?;
+    file.write_all(&bytes).map_err(|e| e.to_string())?;
+    file.as_file().sync_all().map_err(|e| e.to_string())?;
+    file.persist(cache_path(directory, &entry.context))
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+pub struct Cache {
+    pub enabled: bool,
+    pub read: Latest<(Context, usize, Result<Option<Entry>, String>)>,
+    pub write: Latest<Result<(), String>>,
+    pub error: Option<String>,
+    directory: PathBuf,
+    attempted: HashSet<String>,
+    pending: VecDeque<Entry>,
+    restoring: bool,
+    // Latest settles before take(); keep completed answers until they are consumed.
+    read_active: bool,
+    write_active: bool,
+}
+impl Default for Cache {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            read: Latest::default(),
+            write: Latest::default(),
+            error: None,
+            directory: crate::live::cache_directory().with_file_name("notes"),
+            attempted: HashSet::new(),
+            pending: VecDeque::new(),
+            restoring: false,
+            read_active: false,
+            write_active: false,
+        }
+    }
+}
+
+impl State {
+    pub fn capture_note_cache(&mut self, id: &str, append: bool) {
+        let captured = if append {
+            self.live.sessions[id].report_cache.clone()
+        } else {
+            None
+        }
+        .or_else(|| context(self, id));
+        self.live.sessions.get_mut(id).unwrap().pending_cache = captured;
+    }
+    pub fn persist_notes(&mut self, id: &str) {
+        if !self.note_cache.enabled || self.note_cache.restoring {
+            return;
+        }
+        let q = &self.live.sessions[id];
+        let (Some(context), Some(report)) = (&q.report_cache, &q.report) else {
+            return;
+        };
+        if report.status == "source_failed" {
+            return;
+        }
+        let entry = Entry {
+            revision: REVISION,
+            context: context.clone(),
+            saved_at: Utc::now(),
+            report: report.clone(),
+            next: q.next.clone(),
+            feed: q.report_feed.clone(),
+            caption: q.caption.trim_end_matches(" / saved notes").to_owned(),
+            local_stamp: None,
+        };
+        self.note_cache
+            .pending
+            .retain(|e| e.context.id != context.id);
+        self.note_cache.pending.push_back(entry);
+    }
+
+    pub fn poll_note_cache(&mut self) -> bool {
+        if !self.note_cache.enabled {
+            return false;
+        }
+        let mut changed = false;
+        if let Some(result) = self.note_cache.write.take() {
+            self.note_cache.write_active = false;
+            self.note_cache.error = result.err().map(|e| format!("Notes not saved: {e}"));
+            changed = true;
+        }
+        if let Some((guard, cache_mode, result)) = self.note_cache.read.take() {
+            self.note_cache.read_active = false;
+            if let Err(e) = &result {
+                self.note_cache.error = Some(format!("Saved notes unavailable: {e}"));
+            }
+            let current = self.selected().and_then(|p| context(self, &p.id));
+            if current.as_ref().is_none_or(|c| c.id != guard.id) {
+                // A discarded read must not prevent restoration when returning to the package.
+                self.note_cache.attempted.remove(&guard.key);
+            }
+            let matches = current.is_some_and(|c| {
+                c.key == guard.key && c.id == guard.id && c.selection == guard.selection
+            }) && self.live.active.is_none()
+                && self.live.sessions.get(&guard.id).is_some_and(|q| {
+                    q.report.is_none() && q.error.is_none() && q.cache == cache_mode
+                });
+            if matches && let Ok(Some(mut entry)) = result {
+                let fresh = entry.fresh(Utc::now());
+                let q = self.live.sessions.get_mut(&guard.id).unwrap();
+                entry.context.selection.apply(q);
+                q.next = entry.next;
+                q.caption = if entry.caption.is_empty() {
+                    "Saved notes".into()
+                } else {
+                    format!("{} / saved notes", entry.caption)
+                };
+                q.pending_feed = entry.feed;
+                q.pending_cache = Some(entry.context);
+                for e in &mut entry.report.evidence {
+                    e.cache = format!(
+                        "{} ({})",
+                        if fresh {
+                            "parsed_cache"
+                        } else {
+                            "stale_cache_parsed"
+                        },
+                        e.cache
+                    );
+                }
+                if !fresh {
+                    entry.report.complete = false;
+                    if entry.report.status == "available" {
+                        entry.report.status = "partial".into();
+                    }
+                    entry
+                        .report
+                        .warnings
+                        .push("Saved notes; upstream freshness has not been rechecked".into());
+                }
+                self.note_cache.restoring = true;
+                self.apply_engine_result(guard.id.clone(), Ok(entry.report));
+                self.live.sessions.get_mut(&guard.id).unwrap().restored = true;
+                self.note_cache.restoring = false;
+            }
+            changed = true;
+        }
+        if !self.note_cache.write_active
+            && let Some(entry) = self.note_cache.pending.pop_front()
+        {
+            let directory = self.note_cache.directory.clone();
+            self.note_cache.write_active = true;
+            self.note_cache
+                .write
+                .request(entry, move |entry| save(&directory, entry));
+        }
+        if !self.note_cache.read_active && !self.inventory.open && self.live.active.is_none() {
+            let candidate = self.selected().filter(|p| !p.sample_notes).and_then(|p| {
+                let q = self.live.sessions.get(&p.id)?;
+                (q.report.is_none() && q.error.is_none() && q.cache != 1)
+                    .then(|| (context(self, &p.id), q.cache))
+            });
+            if let Some((Some(context), mode)) = candidate
+                && self.note_cache.attempted.insert(context.key.clone())
+            {
+                let directory = self.note_cache.directory.clone();
+                self.note_cache.read_active = true;
+                self.note_cache
+                    .read
+                    .request((context, mode), move |(context, mode)| {
+                        let result = load(&directory, &context);
+                        (context, mode, result)
+                    });
+            }
+        }
+        changed
+    }
+}
+
+pub fn saved_scene(s: &mut State) {
+    s.inventory.scans = releasescout_engine::matching::load_snapshot(
+        &crate::live::cache_directory().with_file_name("inventory.json"),
+    )
+    .expect("saved inventory");
+    s.rebuild_detected();
+    let id = s
+        .catalog
+        .packages
+        .iter()
+        .find(|p| {
+            p.reference_id.as_deref() == Some("gcloud")
+                && p.provider == Some(releasescout_engine::inventory::Manager::Scoop)
+        })
+        .expect("saved gcloud observation")
+        .id
+        .clone();
+    s.select_package(&id);
+    s.note_cache.enabled = true;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        s.poll_note_cache();
+        if !s.note_cache.read_active {
+            break;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "saved notes read did not settle"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
+    assert!(
+        s.live.sessions[&id].restored,
+        "run saved_gcloud_parsed_cache_roundtrip first"
+    );
+    s.note_cache.enabled = false;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    #[ignore = "explicit gcloud source/cache integration; reads saved inventory and refreshes HTTP/parsed caches only"]
+    fn saved_gcloud_parsed_cache_roundtrip() {
+        let scans = releasescout_engine::matching::load_snapshot(
+            &crate::live::cache_directory().with_file_name("inventory.json"),
+        )
+        .unwrap();
+        fn detected(scans: &[releasescout_engine::inventory::Scan]) -> State {
+            let mut s = State::new();
+            s.inventory.scans = scans.to_vec();
+            s.rebuild_detected();
+            let id = s
+                .catalog
+                .packages
+                .iter()
+                .find(|p| {
+                    p.reference_id.as_deref() == Some("gcloud")
+                        && p.provider == Some(releasescout_engine::inventory::Manager::Scoop)
+                })
+                .unwrap()
+                .id
+                .clone();
+            s.select_package(&id);
+            s.note_cache.enabled = true;
+            s
+        }
+        let mut first = detected(&scans);
+        let id = first.selected().unwrap().id.clone();
+        first.engine_query().range = false;
+        first.engine_query().cache = 1;
+        first.fetch_notes();
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(60);
+        loop {
+            if first.poll_engine() | first.poll_history() {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "gcloud request did not settle"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+        assert!(
+            first.live.sessions[&id].error.is_none(),
+            "{:?}",
+            first.live.sessions[&id].error
+        );
+        let report = first.live.sessions[&id].report.as_ref().unwrap();
+        assert!(!report.notes.is_empty());
+        assert!(
+            report
+                .evidence
+                .iter()
+                .all(|e| !e.cache.starts_with("stale_cache"))
+        );
+        let expected = serde_json::to_value(&report.notes).unwrap();
+        settle(&mut first);
+        let mut second = detected(&scans);
+        let started = std::time::Instant::now();
+        settle(&mut second);
+        assert!(second.live.sessions[&id].restored);
+        assert_eq!(
+            serde_json::to_value(&second.live.sessions[&id].report.as_ref().unwrap().notes)
+                .unwrap(),
+            expected
+        );
+        assert!(!second.live.work.is_pending() && !second.live.history.is_pending());
+        assert!(second.inventory.discovery.iter().all(|w| !w.is_pending()));
+        assert!(!second.inventory.persist);
+        eprintln!(
+            "Restored {} gcloud releases from parsed cache in {:?}; no source or inventory worker started",
+            second.selected().unwrap().releases.len(),
+            started.elapsed()
+        );
+    }
+    fn state(directory: &Path) -> State {
+        let mut s = State::new();
+        crate::update_status::scene(&mut s);
+        s.note_cache.enabled = true;
+        s.note_cache.directory = directory.into();
+        s
+    }
+    fn blank(s: &mut State) {
+        let id = s.selected().unwrap().id.clone();
+        let q = s.live.sessions.get_mut(&id).unwrap();
+        q.report = None;
+        q.report_cache = None;
+        q.pending_cache = None;
+        q.pending_feed = None;
+        q.report_feed = None;
+        q.next = None;
+        s.catalog
+            .packages
+            .iter_mut()
+            .find(|p| p.id == id)
+            .unwrap()
+            .releases
+            .clear();
+    }
+    fn settle(s: &mut State) {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            s.poll_note_cache();
+            if !s.note_cache.read_active
+                && !s.note_cache.write_active
+                && s.note_cache.pending.is_empty()
+            {
+                break;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "cache IO did not settle"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+    }
+    #[test]
+    fn successful_notes_restore_on_reopen_without_http_or_rewriting_the_snapshot() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut first = state(dir.path());
+        let id = first.selected().unwrap().id.clone();
+        first.persist_notes(&id);
+        settle(&mut first);
+        let c = context(&first, &id).unwrap();
+        let path = cache_path(dir.path(), &c);
+        let before = fs::read(&path).unwrap();
+        let mut second = state(dir.path());
+        blank(&mut second);
+        settle(&mut second);
+        assert_eq!(second.selected().unwrap().releases[0].version, "2.2.0");
+        assert!(
+            second.live.sessions[&id]
+                .caption
+                .to_lowercase()
+                .ends_with("saved notes")
+        );
+        assert_eq!(
+            crate::update_status::publisher(&second, second.selected().unwrap()).value,
+            "2.2.0 / cached"
+        );
+        assert!(!second.live.work.is_pending() && !second.live.history.is_pending());
+        assert_eq!(before, fs::read(path).unwrap());
+        assert!(second.note_cache.error.is_none());
+    }
+    #[test]
+    fn cache_keeps_request_selection_and_pagination_not_later_draft_controls() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut first = state(dir.path());
+        let id = first.selected().unwrap().id.clone();
+        let q = first.live.sessions.get_mut(&id).unwrap();
+        let report = q.report.take().unwrap();
+        q.range = true;
+        q.channel = 1;
+        q.from = TextEdit::new("1.0.0");
+        q.to = TextEdit::new("2.2.0");
+        first.capture_note_feed(&id, false);
+        first.live.sessions.get_mut(&id).unwrap().channel = 2;
+        first.apply_engine_result(id.clone(), Ok(report));
+        settle(&mut first);
+        let mut second = state(dir.path());
+        blank(&mut second);
+        settle(&mut second);
+        let q = &second.live.sessions[&id];
+        assert!(q.range);
+        assert_eq!(q.channel, 1);
+        assert_eq!(q.from.text, "1.0.0");
+        assert_eq!(q.to.text, "2.2.0");
+        assert!(q.report.is_some());
+        let c = context(&second, &id).unwrap();
+        let mut entry = load(dir.path(), &c).unwrap().unwrap();
+        entry.next = Some(HistoryCursor {
+            package: id.clone(),
+            stream: "main".into(),
+            source_index: 0,
+            source_key: "fixture source".into(),
+            page: 2,
+            offset: 20,
+        });
+        save(dir.path(), entry).unwrap();
+        let mut third = state(dir.path());
+        blank(&mut third);
+        settle(&mut third);
+        assert_eq!(third.live.sessions[&id].next.as_ref().unwrap().offset, 20);
+    }
+    #[test]
+    fn changed_install_or_profile_invalidates_notes_and_late_reads_do_not_replace_user_queries() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut first = state(dir.path());
+        let id = first.selected().unwrap().id.clone();
+        first.persist_notes(&id);
+        settle(&mut first);
+        let original = context(&first, &id).unwrap();
+        let mut changed = state(dir.path());
+        blank(&mut changed);
+        changed
+            .catalog
+            .packages
+            .iter_mut()
+            .find(|p| p.id == id)
+            .unwrap()
+            .installed = Some("3.0.0".into());
+        assert_ne!(context(&changed, &id).unwrap().key, original.key);
+        settle(&mut changed);
+        assert!(changed.live.sessions[&id].report.is_none());
+        let mut changed = state(dir.path());
+        blank(&mut changed);
+        changed
+            .live
+            .catalog
+            .packages
+            .iter_mut()
+            .find(|p| p.id == id)
+            .unwrap()
+            .streams[0]
+            .scope = "Other component".into();
+        assert_ne!(context(&changed, &id).unwrap().key, original.key);
+        settle(&mut changed);
+        assert!(changed.live.sessions[&id].report.is_none());
+        let mut late = state(dir.path());
+        blank(&mut late);
+        late.poll_note_cache();
+        late.live.sessions.get_mut(&id).unwrap().channel = 1;
+        settle(&mut late);
+        assert!(late.live.sessions[&id].report.is_none());
+        assert_eq!(late.live.sessions[&id].channel, 1);
+    }
+    #[test]
+    fn stale_offline_results_remain_labelled_stale_and_failures_do_not_replace_good_cache() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut first = state(dir.path());
+        let id = first.selected().unwrap().id.clone();
+        first.persist_notes(&id);
+        settle(&mut first);
+        let c = context(&first, &id).unwrap();
+        let mut entry = load(dir.path(), &c).unwrap().unwrap();
+        entry.saved_at = Utc::now() - chrono::Duration::hours(1);
+        save(dir.path(), entry).unwrap();
+        let path = cache_path(dir.path(), &c);
+        let before = fs::read(&path).unwrap();
+        let mut second = state(dir.path());
+        blank(&mut second);
+        second.live.sessions.get_mut(&id).unwrap().cache = 2;
+        settle(&mut second);
+        let report = second.live.sessions[&id].report.as_ref().unwrap();
+        assert!(!report.complete);
+        assert!(report.warnings.iter().any(|w| w.contains("Saved notes")));
+        assert!(!second.live.work.is_pending());
+        let mut failed = report.clone();
+        failed.status = "source_failed".into();
+        failed.notes.clear();
+        second.apply_engine_result(id.clone(), Ok(failed));
+        assert!(!second.selected().unwrap().releases.is_empty());
+        second.apply_engine_result(id, Err("Fixture refresh failed".into()));
+        settle(&mut second);
+        assert_eq!(before, fs::read(path).unwrap());
+        assert!(!second.selected().unwrap().releases.is_empty());
+    }
+    #[test]
+    fn malformed_wrong_revision_oversized_and_invalid_component_entries_are_not_restored() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut s = state(dir.path());
+        let id = s.selected().unwrap().id.clone();
+        s.persist_notes(&id);
+        settle(&mut s);
+        let c = context(&s, &id).unwrap();
+        let path = cache_path(dir.path(), &c);
+        let valid = fs::read(&path).unwrap();
+        let mut value: serde_json::Value = serde_json::from_slice(&valid).unwrap();
+        value["revision"] = serde_json::json!(REVISION + 1);
+        fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+        assert!(load(dir.path(), &c).unwrap().is_none());
+        value["revision"] = serde_json::json!(REVISION);
+        value["context"]["selection"]["component"] = serde_json::json!(999);
+        fs::write(&path, serde_json::to_vec(&value).unwrap()).unwrap();
+        assert!(load(dir.path(), &c).unwrap().is_none());
+        fs::write(&path, "{").unwrap();
+        assert!(load(dir.path(), &c).is_err());
+        fs::write(&path, vec![b' '; LIMIT + 1]).unwrap();
+        assert!(load(dir.path(), &c).is_err());
+    }
+    #[test]
+    fn explicit_refresh_skips_restoration_and_bad_files_surface_a_notice_without_fetching() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut first = state(dir.path());
+        let id = first.selected().unwrap().id.clone();
+        first.persist_notes(&id);
+        settle(&mut first);
+        let mut second = state(dir.path());
+        blank(&mut second);
+        second.live.sessions.get_mut(&id).unwrap().cache = 1;
+        settle(&mut second);
+        assert!(second.live.sessions[&id].report.is_none());
+        assert!(!second.note_cache.read.is_pending());
+        let c = context(&first, &id).unwrap();
+        fs::write(cache_path(dir.path(), &c), "broken").unwrap();
+        let mut third = state(dir.path());
+        blank(&mut third);
+        settle(&mut third);
+        assert!(third.note_cache.error.is_some());
+        assert!(!third.live.work.is_pending() && !third.live.history.is_pending());
+    }
+    fn extension_state(directory: &Path, root: &Path) -> State {
+        let mut s = state(directory);
+        let id = s.selected().unwrap().id.clone();
+        s.catalog
+            .packages
+            .iter_mut()
+            .find(|p| p.id == id)
+            .unwrap()
+            .extension = Some(releasescout_engine::extensions::Installed {
+            id: "acme.fixture".into(),
+            root: Some(root.into()),
+            changelog: Some(root.join("CHANGELOG.md")),
+            ..Default::default()
+        });
+        let c = context(&s, &id).unwrap();
+        s.live.sessions.get_mut(&id).unwrap().report_cache = Some(c);
+        s
+    }
+    #[test]
+    fn stale_auto_cache_restores_without_fetching_and_checks_local_file_identity() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = tempfile::tempdir().unwrap();
+        let changelog = root.path().join("CHANGELOG.md");
+        fs::write(&changelog, "## 2.0.0\n\nFixed the startup crash.\n").unwrap();
+        let mut first = extension_state(dir.path(), root.path());
+        let id = first.selected().unwrap().id.clone();
+        first.persist_notes(&id);
+        settle(&mut first);
+        let c = context(&first, &id).unwrap();
+        let mut entry = load(dir.path(), &c).unwrap().unwrap();
+        entry.saved_at = Utc::now() - chrono::Duration::days(2);
+        save(dir.path(), entry).unwrap();
+
+        let mut second = extension_state(dir.path(), root.path());
+        blank(&mut second);
+        assert_eq!(second.live.sessions[&id].cache, 0);
+        settle(&mut second);
+        let q = &second.live.sessions[&id];
+        assert!(q.restored);
+        assert!(
+            q.report
+                .as_ref()
+                .unwrap()
+                .warnings
+                .iter()
+                .any(|w| w.contains("Saved notes"))
+        );
+        assert_eq!(second.selected().unwrap().releases[0].version, "2.2.0");
+        assert!(second.live.active.is_none());
+        assert!(!second.live.work.is_pending() && !second.live.history.is_pending());
+
+        fs::write(changelog, "## 2.0.0\n\nEdited notes.\n").unwrap();
+        assert!(load(dir.path(), &c).unwrap().is_none());
+    }
+
+    #[test]
+    fn returning_after_a_discarded_read_restores_saved_notes() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut first = state(dir.path());
+        let id = first.selected().unwrap().id.clone();
+        first.persist_notes(&id);
+        settle(&mut first);
+
+        let mut reopened = state(dir.path());
+        blank(&mut reopened);
+        reopened.poll_note_cache();
+        assert!(reopened.note_cache.read_active);
+        reopened.set_section(crate::model::LibrarySection::Extensions);
+        settle(&mut reopened);
+        assert!(reopened.live.sessions[&id].report.is_none());
+        reopened.set_section(crate::model::LibrarySection::Software);
+        reopened.select_package(&id);
+        settle(&mut reopened);
+        assert!(reopened.live.sessions[&id].restored);
+    }
+}

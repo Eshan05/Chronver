@@ -1,0 +1,31 @@
+[
+  {
+    "manager":"winget",
+    "source":"winget",
+    "id_pattern":"^Microsoft\\.(?:UI\\.Xaml\\.[0-9.]+|WindowsAppRuntime\\.[0-9.]+|VCLibs(?:\\.Desktop)?\\.[0-9.]+|DotNet\\.(?:Native\\.Runtime|DesktopRuntime\\.[0-9.]+)|VCRedist\\.[0-9]+(?:\\+)?\\.(?:x86|x64)|XNARedist|DirectX)$",
+    "reason":"Shared Windows runtime/framework package"
+  },
+  {
+    "manager":"chocolatey",
+    "id_pattern":"^(?:vcredist[0-9]+|dotnetfx|webview2-runtime)$",
+    "reason":"Shared application runtime/prerequisite package"
+  },
+  {
+    "manager":"scoop",
+    "source":"main",
+    "id_pattern":"^windowsdesktop-runtime$",
+    "reason":"Shared .NET desktop runtime"
+  },
+  {
+    "manager":"scoop",
+    "source":"extras",
+    "id_pattern":"^windowsdesktop-runtime$",
+    "reason":"Shared .NET desktop runtime"
+  },
+  {
+    "manager":"scoop",
+    "source":"nerd-fonts",
+    "id_pattern":".+",
+    "reason":"Font package from the nerd-fonts bucket"
+  }
+]

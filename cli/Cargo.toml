@@ -1,0 +1,19 @@
+[package]
+name = "chronver-cli"
+version = "0.1.0"
+edition = "2024"
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "chronver"
+path = "src/main.rs"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+clap = { version = "4", features = ["derive"] }
+releasescout-engine.workspace = true
+serde_json = "1"
+
+[dev-dependencies]
+tempfile = "3"

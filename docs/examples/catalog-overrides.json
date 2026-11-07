@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "products": [
+    {
+      "id": "gh",
+      "streams": [
+        {
+          "id": "main",
+          "scope": "GitHub CLI stable releases",
+          "basis": "version",
+          "channel": "stable",
+          "sources": [
+            {
+              "kind": "github",
+              "owner": "cli",
+              "repo": "cli",
+              "tag_prefix": "v",
+              "max_pages": 2
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

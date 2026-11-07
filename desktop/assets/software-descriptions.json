@@ -1,0 +1,1556 @@
+[
+  {
+    "product": "@dbml/cli",
+    "description": "Converts database schemas between DBML and SQL formats and can generate DBML from supported live database connections.",
+    "sources": [
+      "https://dbml.dbdiagram.io/cli/",
+      "https://dbml.dbdiagram.io/home/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "dbml-cli"
+      },
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "@dbml/cli"
+      }
+    ]
+  },
+  {
+    "product": "AMD Chipset Software",
+    "description": "Installs AMD motherboard chipset drivers and related components that support communication between system hardware devices.",
+    "sources": [
+      "https://www.amd.com/en/resources/support-articles/faqs/CHIPSET-INSTALL.html",
+      "https://www.amd.com/en/resources/support-articles/faqs/GPU-56.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "amd chipset software",
+        "publisher": "advanced micro devices, inc."
+      }
+    ]
+  },
+  {
+    "product": "AMD Ryzen Master SDK",
+    "description": "Provides developer interfaces for querying AMD Ryzen processor and memory information in hardware utilities.",
+    "sources": [
+      "https://www.amd.com/en/developer/ryzen-master-monitoring-sdk.html",
+      "https://www.amd.com/en/resources/product-security/bulletin/amd-sb-9004.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "amd ryzen master sdk",
+        "publisher": "advanced micro devices, inc."
+      }
+    ]
+  },
+  {
+    "product": "AMD Software: Adrenalin Edition",
+    "description": "Provides Radeon graphics and driver information, update controls, and settings for graphics, game profiles, capture, and performance tuning.",
+    "sources": [
+      "https://www.amd.com/en/resources/support-articles/faqs/DH3-012.html",
+      "https://www.amd.com/en/resources/support-articles/faqs/DH3-016.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "amd software",
+        "publisher": "advanced micro devices, inc."
+      }
+    ]
+  },
+  {
+    "product": "App Installer",
+    "description": "Installs MSIX and MSIXBundle application packages on Windows and distributes the WinGet command-line package manager.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/msix/app-installer/install-update-app-installer",
+      "https://learn.microsoft.com/en-us/windows/package-manager/winget/"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "Microsoft.DesktopAppInstaller_8wekyb3d8bbwe"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.AppInstaller"
+      }
+    ]
+  },
+  {
+    "product": "Bang & Olufsen Audio Control Panel",
+    "description": "Lets users view and adjust audio and bass settings for Bang & Olufsen-enhanced audio on supported HP computers.",
+    "sources": [
+      "https://h10032.www1.hp.com/ctg/Manual/c04649647.pdf"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "AD2F1837.BOAudioControl_v10z8vjag6ke6"
+      }
+    ]
+  },
+  {
+    "product": "Canva",
+    "description": "An online visual design and publishing tool for creating graphics, presentations, videos, and other media.",
+    "sources": [
+      "https://www.canva.com/en_gb/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "canva"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "XP8K17RNMM8MTN"
+      },
+      {
+        "kind": "local",
+        "name": "canva",
+        "publisher": "canva pty ltd"
+      }
+    ]
+  },
+  {
+    "product": "ChatGPT desktop app",
+    "description": "Provides ChatGPT chat and work features on desktop, alongside a separate Codex view for software development with local files and tools.",
+    "sources": [
+      "https://help.openai.com/en/articles/20001276-moving-to-the-new-chatgpt-desktop-app"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "chatgpt-desktop"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "OpenAI.Codex_2p2nqsd0c76g0"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "OpenAI.ChatGPT"
+      }
+    ]
+  },
+  {
+    "product": "Cheat Engine",
+    "description": "A memory scanner and debugging toolkit for inspecting and modifying game behavior, with scripting and other program-analysis tools.",
+    "sources": [
+      "https://www.cheatengine.org/aboutce.php",
+      "https://www.cheatengine.org/help/AboutCheatEngine.htm"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "cheat engine",
+        "publisher": "cheat engine"
+      }
+    ]
+  },
+  {
+    "product": "Claude Desktop",
+    "description": "A desktop app for using Claude, with extensions that connect it to local tools, files, and other data sources.",
+    "sources": [
+      "https://support.anthropic.com/en/articles/11817150-connect-your-tools-to-unlock-a-smarter-more-capable-ai-companion",
+      "https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "claude-desktop"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "Claude_pzs8sxrjxfjjc"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Anthropic.Claude"
+      }
+    ]
+  },
+  {
+    "product": "Discord",
+    "description": "A communication platform for text, voice, and video conversations organized in communities and topic-based channels.",
+    "sources": [
+      "https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "discord",
+        "publisher": "discord inc."
+      }
+    ]
+  },
+  {
+    "product": "Docker Desktop",
+    "description": "Builds, shares, and runs containerized apps and microservices, with a desktop interface for managing containers and images.",
+    "sources": [
+      "https://docs.docker.com/desktop/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "docker-desktop"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "XP8CBJ40XLBWKX"
+      },
+      {
+        "kind": "local",
+        "name": "docker desktop",
+        "publisher": "docker inc."
+      }
+    ]
+  },
+  {
+    "product": "DX-Ball",
+    "description": "A paddle-and-ball arcade game in which players bounce a ball to break arrangements of bricks.",
+    "sources": [
+      "https://classic.blitwise.com/Scorched_Reality/index.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "dx-ball",
+        "publisher": null
+      }
+    ]
+  },
+  {
+    "product": "f.lux",
+    "description": "Automatically adjusts a computer display's color to match the time of day, using warmer tones at night and daylight-like color during the day.",
+    "sources": [
+      "https://justgetflux.com/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "flux"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "F.luxSoftwareLLC.f.lux_sw1dyjdkns7gt"
+      }
+    ]
+  },
+  {
+    "product": "FFmpeg library for Audacity",
+    "description": "Adds support in Audacity for importing and exporting additional audio formats and importing audio from many video files.",
+    "sources": [
+      "https://manual.audacityteam.org/man/faq_installing_the_ffmpeg_import_export_library.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "ffmpeg 5.0.0 for audacity - x86_64",
+        "publisher": null
+      }
+    ]
+  },
+  {
+    "product": "Figma",
+    "description": "A collaborative interface design tool for creating, prototyping, and sharing UI designs with teams.",
+    "sources": [
+      "https://www.figma.com/ui-design-tool/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "figma"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Figma.Figma"
+      },
+      {
+        "kind": "local",
+        "name": "figma",
+        "publisher": "figma, inc."
+      }
+    ]
+  },
+  {
+    "product": "File Pilot",
+    "description": "A Windows file manager for browsing, searching, inspecting, and organizing files with panels, tabs, and batch renaming.",
+    "sources": [
+      "https://filepilot.tech/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "file-pilot"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Voidstar.FilePilot"
+      },
+      {
+        "kind": "local",
+        "name": "file pilot",
+        "publisher": "voidstar"
+      }
+    ]
+  },
+  {
+    "product": "Files",
+    "description": "A Windows file manager for organizing files and folders, with multitasking features, file tags, and integrations.",
+    "sources": [
+      "https://files.community/docs/getting-started/overview"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "files"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "Files_1y0xx7n9077q4"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "FilesCommunity.Files"
+      }
+    ]
+  },
+  {
+    "product": "Fluent Reader",
+    "description": "A desktop RSS news reader that collects feeds, supports local reading or service sync, and organizes articles and subscriptions.",
+    "sources": [
+      "https://github.com/yang991178/fluent-reader"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "25286HaoyuanLiu.FluentReader_5bmsqm5p4m2q6"
+      }
+    ]
+  },
+  {
+    "product": "Gemini CLI",
+    "description": "A terminal interface for using Gemini models to understand code, automate tasks, and build workflows with local project context.",
+    "sources": [
+      "https://github.com/google-gemini/gemini-cli/blob/main/docs/index.md"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "gemini-cli"
+      },
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "@google/gemini-cli"
+      }
+    ]
+  },
+  {
+    "product": "Git",
+    "description": "A distributed version control system for recording project changes, maintaining history, and collaborating across repositories.",
+    "sources": [
+      "https://git-scm.com/",
+      "https://gitforwindows.org/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "git"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Git.Git"
+      },
+      {
+        "kind": "local",
+        "name": "git",
+        "publisher": "the git development community"
+      }
+    ]
+  },
+  {
+    "product": "Google Chrome",
+    "description": "A web browser for visiting websites, managing tabs, and syncing bookmarks and saved passwords across signed-in devices.",
+    "sources": [
+      "https://www.google.com/chrome/"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "google chrome",
+        "publisher": "google llc"
+      }
+    ]
+  },
+  {
+    "product": "Grand Theft Auto: San Andreas",
+    "description": "An open-world crime game following Carl Johnson on a journey across San Andreas to save his family and take control of the streets.",
+    "sources": [
+      "https://store.rockstargames.com/game/buy-grand-theft-auto-the-trilogy",
+      "https://www.rockstargames.com/newswire/article/9k124883835743/san-andreas-now-available-for-ios.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "gta san andreas",
+        "publisher": "rockstar games"
+      }
+    ]
+  },
+  {
+    "product": "Hill Climb Racing",
+    "description": "A physics-based driving game where players climb varied hills in unusual vehicles, collect coins, and perform stunts.",
+    "sources": [
+      "https://fingersoft.com/games/hill-climb-racing/"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "FINGERSOFT.HILLCLIMBRACING_r6rtpscs7gwyg"
+      }
+    ]
+  },
+  {
+    "product": "HP Audio Switch",
+    "description": "An HP utility for switching between audio speaker and microphone sources using on-screen controls.",
+    "sources": [
+      "https://www.hp.com/content/dam/sites/garage-press/press/press-kits/2021/ces-2021/hp_envy_14_datasheet_us.pdf"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "hp audio switch",
+        "publisher": "hp inc."
+      }
+    ]
+  },
+  {
+    "product": "HP Connection Optimizer",
+    "description": "HP software that automatically recovers the driver of a communications device when it stops functioning.",
+    "sources": [
+      "https://ftp.hp.com/pub/softpaq/sp172001-172500/sp172460.html"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "HP.ConnectionOptimizer"
+      },
+      {
+        "kind": "local",
+        "name": "hp connection optimizer",
+        "publisher": "hp inc."
+      }
+    ]
+  },
+  {
+    "product": "HP Documentation",
+    "description": "An HP app that provides local access to product manuals, user guides, warranty information, and other documentation.",
+    "sources": [
+      "https://kaas.hpcloud.hp.com/pdf-public/pdf_6682044_en-US-1.pdf"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "hp documentation",
+        "publisher": "hp inc."
+      }
+    ]
+  },
+  {
+    "product": "HP PC Hardware Diagnostics Windows",
+    "description": "A Windows utility that runs diagnostic tests to check HP computer hardware and help identify hardware failures.",
+    "sources": [
+      "https://ftp.hp.com/pub/softpaq/sp173001-173500/sp173208.html"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "AD2F1837.HPPCHardwareDiagnosticsWindows_v10z8vjag6ke6"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "HP.PCHardwareDiagnostics.Windows"
+      }
+    ]
+  },
+  {
+    "product": "HP Smart",
+    "description": "An HP printer app for setting up and managing printers, printing documents, scanning, and troubleshooting printer issues.",
+    "sources": [
+      "https://kaas.hpcloud.hp.com/pdf-public/pdf_12258044_en-US-1.pdf"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "AD2F1837.HPPrinterControl_v10z8vjag6ke6"
+      }
+    ]
+  },
+  {
+    "product": "HP Software Framework",
+    "description": "An HP notebook software layer that provides shared interfaces for accessing hardware, BIOS, and HP-specific Windows drivers.",
+    "sources": [
+      "https://ftp.hp.com/pub/softpaq/sp59001-59500/sp59202.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "hp software framework",
+        "publisher": "hp"
+      }
+    ]
+  },
+  {
+    "product": "Kilo Code CLI",
+    "description": "A terminal-based coding agent for planning, debugging, and making code changes in a project.",
+    "sources": [
+      "https://kilo.ai/docs/code-with-ai/platforms/cli"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "kilocode-cli"
+      },
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "@kilocode/cli"
+      }
+    ]
+  },
+  {
+    "product": "Laragon",
+    "description": "A portable, isolated development environment for building and managing web applications with languages such as PHP, Node.js, and Python.",
+    "sources": [
+      "https://laragon.org/docs"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "laragon"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "LeNgocKhoa.Laragon"
+      },
+      {
+        "kind": "local",
+        "name": "laragon",
+        "publisher": "leokhoa"
+      }
+    ]
+  },
+  {
+    "product": "Malwarebytes",
+    "description": "Security software that scans for and removes malware; paid editions also provide real-time threat protection.",
+    "sources": [
+      "https://www.malwarebytes.com/mwb-download"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Malwarebytes.Malwarebytes"
+      },
+      {
+        "kind": "local",
+        "name": "malwarebytes",
+        "publisher": "malwarebytes"
+      }
+    ]
+  },
+  {
+    "product": "Microsoft GameInput",
+    "description": "A game-development input API that gives software a unified interface to keyboards, mice, gamepads, and other controllers.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/gaming/gdk/docs/features/common/input/overviews/input-overview?view=gdk-2510"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.GameInput"
+      },
+      {
+        "kind": "local",
+        "name": "microsoft gameinput",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Microsoft OneDrive",
+    "description": "A cloud file storage and sync service that backs up files and makes them accessible across devices and shareable with others.",
+    "sources": [
+      "https://support.microsoft.com/en-us/onedrive/store-your-work-files-on-onedrive"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.OneDrive"
+      },
+      {
+        "kind": "local",
+        "name": "microsoft onedrive",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Microsoft PowerToys",
+    "description": "A collection of Windows utilities for tasks such as arranging windows, remapping keys, resizing images, and launching apps.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/powertoys"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "powertoys"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "XP89DCGQ3K6VLD"
+      },
+      {
+        "kind": "local",
+        "name": "powertoys (preview) x64",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Microsoft Store",
+    "description": "A Microsoft marketplace for finding, downloading, installing, and updating Windows apps and games.",
+    "sources": [
+      "https://support.microsoft.com/en-us/accounts-billing/get-trusted-apps-and-games-from-microsoft-store"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "Microsoft.WindowsStore_8wekyb3d8bbwe"
+      }
+    ]
+  },
+  {
+    "product": "Microsoft Update Health Tools",
+    "description": "Windows Update components that help maintain update reliability on consumer devices and support update management for businesses.",
+    "sources": [
+      "https://support.microsoft.com/en-us/servicing/os/windows-10/2020/11/kb4023057-update-health-tools-windows-update-service-components"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "microsoft update health tools",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "MiniTool Partition Wizard",
+    "description": "A disk and partition management utility for resizing, moving, formatting, and copying disk partitions.",
+    "sources": [
+      "https://www.partitionwizard.com/help/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "minitool-partition-wizard"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "MiniTool.PartitionWizard.Free"
+      },
+      {
+        "kind": "local",
+        "name": "minitool partition wizard free",
+        "publisher": "minitool software limited"
+      }
+    ]
+  },
+  {
+    "product": "Mozilla Maintenance Service",
+    "description": "A Windows service that lets Firefox install updates requiring elevation without prompting for administrator approval each time.",
+    "sources": [
+      "https://firefox-source-docs.mozilla.org/toolkit/mozapps/update/docs/Implementation.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "mozilla maintenance service",
+        "publisher": "mozilla"
+      }
+    ]
+  },
+  {
+    "product": "Need for Speed: Most Wanted",
+    "description": "An open-world street-racing game featuring rival drivers, vehicle challenges, and police pursuits.",
+    "sources": [
+      "https://news.ea.com/press-releases/press-releases-details/2012/Criterion-Games-Reinvents-Best-Selling-Need-for-Speed-Most-Wanted/default.aspx",
+      "https://www.ea.com/games/need-for-speed/need-for-speed-most-wanted"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "need for speed: most wanted",
+        "publisher": null
+      }
+    ]
+  },
+  {
+    "product": "Node.js",
+    "description": "An asynchronous, event-driven JavaScript runtime for building network applications and other server-side tools.",
+    "sources": [
+      "https://nodejs.org/en/about"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "OpenJS.NodeJS.20"
+      },
+      {
+        "kind": "local",
+        "name": "node.js",
+        "publisher": "node.js foundation"
+      }
+    ]
+  },
+  {
+    "product": "Notepads",
+    "description": "A lightweight Windows text editor with tabs, Markdown preview, and a diff viewer for comparing changes.",
+    "sources": [
+      "https://github.com/0x7c13/notepads"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "notepads"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "19282JackieLiu.Notepads-Beta_echhpq9pdbte8"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "JackieLiu.NotepadsApp"
+      }
+    ]
+  },
+  {
+    "product": "Notion",
+    "description": "A connected workspace for creating documents and wikis, organizing projects, and managing information in databases.",
+    "sources": [
+      "https://www.notion.com/en-US/product/notion"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "notion"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Notion.Notion"
+      },
+      {
+        "kind": "local",
+        "name": "notion",
+        "publisher": "notion labs, inc"
+      }
+    ]
+  },
+  {
+    "product": "NoVirusThanks Smart File Delete",
+    "description": "A Windows utility for deleting files and undoing deletions through its file recovery workflow.",
+    "sources": [
+      "https://www.novirusthanks.org"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "smart file delete",
+        "publisher": "company tke"
+      }
+    ]
+  },
+  {
+    "product": "Nuxt CLI (Nuxi)",
+    "description": "Command-line tools for Nuxt projects, including development, production builds, module management, and type checking.",
+    "sources": [
+      "https://github.com/nuxt/cli"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "nuxt-cli"
+      },
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "@nuxt/cli"
+      }
+    ]
+  },
+  {
+    "product": "NVIDIA Control Panel",
+    "description": "A configuration app for NVIDIA graphics settings, including global 3D options and per-game or per-application profiles.",
+    "sources": [
+      "https://www.nvidia.com/content/Control-Panel-Help/vLatest/en-us/mergedProjects/nv3d/Manage_3D_Settings_(Reference).htm"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "NVIDIACorp.NVIDIAControlPanel_56jybvy8sckqj"
+      }
+    ]
+  },
+  {
+    "product": "NVIDIA FrameView SDK",
+    "description": "A supporting SDK for recording frame timing, graphics performance, and hardware power measurements in applications.",
+    "sources": [
+      "https://developer.nvidia.com/rtx/streamline/get-started",
+      "https://www.nvidia.com/content/dam/en-zz/Solutions/GeForce/technologies/frameview/frameview-user-guide-1-1-web.pdf"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "nvidia frameview sdk",
+        "publisher": "nvidia corporation"
+      }
+    ]
+  },
+  {
+    "product": "NVIDIA Graphics Driver",
+    "description": "Windows driver software that enables NVIDIA graphics hardware and exposes its GPU capabilities to applications.",
+    "sources": [
+      "https://docs.nvidia.com/vgpu/21.0/grid-vgpu-user-guide/installing-grid-vgpu-display-drivers.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "nvidia graphics driver",
+        "publisher": "nvidia corporation"
+      }
+    ]
+  },
+  {
+    "product": "NVIDIA PhysX System Software",
+    "description": "Runtime software that supports applications using NVIDIA PhysX and their GPU-accelerated physics features.",
+    "sources": [
+      "https://www.nvidia.com/en-gb/drivers/physx-system-software/"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Nvidia.PhysX"
+      },
+      {
+        "kind": "local",
+        "name": "nvidia physx system software",
+        "publisher": "nvidia corporation"
+      }
+    ]
+  },
+  {
+    "product": "NVM for Windows",
+    "description": "A Windows utility for installing and switching among multiple Node.js versions.",
+    "sources": [
+      "https://github.com/nvm-windows/nvm"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "nvm for windows",
+        "publisher": "author software inc."
+      }
+    ]
+  },
+  {
+    "product": "Office Home & Student 2019",
+    "description": "A desktop productivity suite for writing documents, working with spreadsheets, and creating presentations.",
+    "sources": [
+      "https://www.microsoft.com/en-us/microsoft-365/microsoft-365-and-office-resources"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "microsoft office home and student 2019 - en-us",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "OpenCode CLI",
+    "description": "A terminal coding agent that works in a project through an interactive interface or command-line runs for automation.",
+    "sources": [
+      "https://opencode.ai/docs",
+      "https://opencode.ai/docs/cli"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "opencode"
+      },
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "@opencode/cli"
+      }
+    ]
+  },
+  {
+    "product": "Oracle VirtualBox",
+    "description": "A cross-platform virtualization application for running multiple operating systems in virtual machines on one computer.",
+    "sources": [
+      "https://docs.oracle.com/en/virtualization/virtualbox/7.1/user/Introduction.html"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Oracle.VirtualBox"
+      },
+      {
+        "kind": "local",
+        "name": "oracle virtualbox",
+        "publisher": "oracle and/or its affiliates"
+      }
+    ]
+  },
+  {
+    "product": "PDF24 Creator",
+    "description": "Windows software for creating and editing PDFs, including merging or splitting files and rearranging pages offline.",
+    "sources": [
+      "https://tools.pdf24.org/en/creator"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "pdf24"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "XPFD51H3VQZFM0"
+      },
+      {
+        "kind": "local",
+        "name": "pdf24 creator",
+        "publisher": "geek software gmbh"
+      }
+    ]
+  },
+  {
+    "product": "pnpm",
+    "description": "A JavaScript package manager that installs and manages project dependencies using a shared package store.",
+    "sources": [
+      "https://pnpm.io/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "pnpm"
+      },
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "pnpm"
+      }
+    ]
+  },
+  {
+    "product": "Pocket Tanks",
+    "description": "A turn-based artillery game where players choose an angle, power, and weapon to fire at an opponent.",
+    "sources": [
+      "https://classic.blitwise.com/pockettanks.html"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "pocket tanks",
+        "publisher": "blitwise productions, llc"
+      }
+    ]
+  },
+  {
+    "product": "Podman",
+    "description": "A daemonless container engine and command-line tool for building and running OCI containers and pods.",
+    "sources": [
+      "https://podman.io/downloads"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "podman"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "RedHat.Podman"
+      },
+      {
+        "kind": "local",
+        "name": "podman",
+        "publisher": "red hat"
+      }
+    ]
+  },
+  {
+    "product": "PowerShell",
+    "description": "A command-line shell and scripting language used for task automation and system management.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/powershell/scripting/overview"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.PowerShell"
+      },
+      {
+        "kind": "local",
+        "name": "powershell",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Python",
+    "description": "A programming language and runtime used to write applications, scripts, and tools across many domains.",
+    "sources": [
+      "https://www.python.org/about/"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "python",
+        "publisher": "python software foundation"
+      }
+    ]
+  },
+  {
+    "product": "Python Launcher for Windows",
+    "description": "A Windows command-line utility that locates and runs a selected installed Python version.",
+    "sources": [
+      "https://docs.python.org/3/using/windows.html"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Python.Launcher"
+      },
+      {
+        "kind": "local",
+        "name": "python launcher",
+        "publisher": "python software foundation"
+      }
+    ]
+  },
+  {
+    "product": "pywin32",
+    "description": "Python extensions that provide access to Windows APIs, including COM support.",
+    "sources": [
+      "https://github.com/mhammond/pywin32"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "python 3.2 pywin32-217",
+        "publisher": null
+      }
+    ]
+  },
+  {
+    "product": "qBittorrent",
+    "description": "A BitTorrent client for managing peer-to-peer file transfers, including torrent downloads and uploads.",
+    "sources": [
+      "https://github.com/qbittorrent/qBittorrent"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "qbittorrent",
+        "publisher": "the qbittorrent project"
+      }
+    ]
+  },
+  {
+    "product": "Rainmeter",
+    "description": "A Windows desktop customization tool that displays configurable skins such as system meters and audio visualizers.",
+    "sources": [
+      "https://www.rainmeter.net/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "rainmeter"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Rainmeter.Rainmeter"
+      }
+    ]
+  },
+  {
+    "product": "Realtek Audio Driver",
+    "description": "Windows driver software for Realtek PC audio codecs, enabling the operating system to use the audio hardware.",
+    "sources": [
+      "https://www.realtek.com/Download/List?cate_id=593&menu_id=298"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "realtek audio driver",
+        "publisher": "realtek semiconductor corp."
+      }
+    ]
+  },
+  {
+    "product": "Screenbox",
+    "description": "A Windows video player for local and network media, with features including picture-in-picture and Chromecast support.",
+    "sources": [
+      "https://github.com/huynhsontung/Screenbox"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "18496Starpine.Screenbox_rm8wvch11q4my"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Starpine.Screenbox"
+      }
+    ]
+  },
+  {
+    "product": "ShareX",
+    "description": "A Windows tool for capturing and recording the screen, annotating images, and sharing files through upload destinations.",
+    "sources": [
+      "https://getsharex.com/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "sharex"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "19568ShareX.ShareX_egrzcvs15399j"
+      }
+    ]
+  },
+  {
+    "product": "Slack",
+    "description": "A team communication app for organized messaging, channels, calls, file sharing, and integrations with other services.",
+    "sources": [
+      "https://slack.com/features"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "slack"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "91750D7E.Slack_8she8kybcnzg4"
+      }
+    ]
+  },
+  {
+    "product": "Spotify",
+    "description": "A digital service for listening to music, podcasts, and other creator content across supported devices.",
+    "sources": [
+      "https://support.spotify.com/uk/article/what-is-spotify/"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Spotify.Spotify"
+      },
+      {
+        "kind": "local",
+        "name": "spotify",
+        "publisher": "spotify ab"
+      }
+    ]
+  },
+  {
+    "product": "Sublime Text",
+    "description": "A text editor for working with code, markup, and prose, with features for navigating and editing source files.",
+    "sources": [
+      "https://www.sublimetext.com/"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "sublime text",
+        "publisher": "sublime hq pty ltd"
+      }
+    ]
+  },
+  {
+    "product": "Unigram",
+    "description": "A Telegram messaging client for Windows, with chats and other Telegram communication features.",
+    "sources": [
+      "https://github.com/UnigramDev/Unigram"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "unigram"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "38833FF26BA1D.UnigramPreview_g9c9v27vpyspw"
+      }
+    ]
+  },
+  {
+    "product": "uutils coreutils",
+    "description": "A cross-platform Rust reimplementation of GNU coreutils, a collection of command-line utilities for common file and system operations.",
+    "sources": [
+      "https://github.com/uutils/coreutils"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "uutils.coreutils"
+      },
+      {
+        "kind": "local",
+        "name": "coreutils",
+        "publisher": "uutils"
+      }
+    ]
+  },
+  {
+    "product": "Visual Studio Code",
+    "description": "A cross-platform code editor with tools for editing, navigating, debugging, testing, and managing source control.",
+    "sources": [
+      "https://code.visualstudio.com/features/code-editing"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.VisualStudioCode"
+      },
+      {
+        "kind": "local",
+        "name": "microsoft visual studio code (user)",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Visual Studio Code Insiders",
+    "description": "A preview build of Microsoft's source code editor, with frequent builds that include recent changes and fixes.",
+    "sources": [
+      "https://code.visualstudio.com/docs/getstarted/overview",
+      "https://code.visualstudio.com/insiders"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "vsc"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.VisualStudioCode.Insiders"
+      },
+      {
+        "kind": "local",
+        "name": "microsoft visual studio code insiders (user)",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Visual Studio Installer",
+    "description": "A setup tool for installing Visual Studio and managing its workloads, components, updates, repairs, and removals.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/visualstudio/install/use-command-line-parameters-to-install-visual-studio?view=visualstudio"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "microsoft visual studio installer",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Vue DevTools",
+    "description": "Developer tools for debugging Vue.js applications, including browser-extension and Vite-plugin integrations.",
+    "sources": [
+      "https://github.com/vuejs/devtools"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "pnpm",
+        "id": "@vue/devtools"
+      }
+    ]
+  },
+  {
+    "product": "WinCDEmu",
+    "description": "A Windows optical-disc emulator that mounts disc-image files as virtual drives and can create ISO images.",
+    "sources": [
+      "https://wincdemu.sysprogs.org/"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "wincdemu",
+        "publisher": "sysprogs"
+      }
+    ]
+  },
+  {
+    "product": "WinDirStat",
+    "description": "A Windows disk-usage analyzer that visualizes folder and file sizes to help locate storage use.",
+    "sources": [
+      "https://windirstat.net/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "windirstat"
+      },
+      {
+        "kind": "local",
+        "name": "windirstat",
+        "publisher": null
+      }
+    ]
+  },
+  {
+    "product": "Windows PC Health Check",
+    "description": "A Windows utility for checking PC health and Windows 11 eligibility, and reviewing update, battery, storage, and startup information.",
+    "sources": [
+      "https://support.microsoft.com/en-gb/windows/experience/compatibility/how-to-use-the-pc-health-check-app"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Microsoft.WindowsPCHealthCheck"
+      },
+      {
+        "kind": "local",
+        "name": "windows pc health check",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Windows SDK",
+    "description": "Development kit containing Windows platform headers, libraries, metadata, and tools for building Windows applications.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/apps/windows-sdk/"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "windows software development kit - windows",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Windows SDK AddOn",
+    "description": "An SDK component that supplies Windows Runtime metadata for compiling Windows applications.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/cpp/cppcx/compiler-and-linker-options-c-cx",
+      "https://learn.microsoft.com/en-us/windows/win32/midl/-metadata-dir"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "windows sdk addon",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Windows Subsystem for Linux",
+    "description": "A Windows feature for installing Linux distributions and running Linux applications and command-line tools on Windows.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/wsl/install"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "MicrosoftCorporationII.WindowsSubsystemForLinux_8wekyb3d8bbwe"
+      }
+    ]
+  },
+  {
+    "product": "Windows Update Service Components Update (KB5001716)",
+    "description": "A Windows Update component update that adds interface functionality and notifications about update readiness and support status.",
+    "sources": [
+      "https://support.microsoft.com/en-us/servicing/os/windows/2022/02/kb5001716-update-for-windows-update-service-components"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "update for x64-based windows systems (kb5001716)",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "WinRAR",
+    "description": "A Windows archive manager for compressing, extracting, and managing RAR and other common archive formats.",
+    "sources": [
+      "https://www.win-rar.com/"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "winrar"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "RARLab.WinRAR"
+      },
+      {
+        "kind": "local",
+        "name": "winrar",
+        "publisher": "win.rar gmbh"
+      }
+    ]
+  },
+  {
+    "product": "Wintoys",
+    "description": "A Windows utility for managing system settings, installed apps and services, cleanup, repairs, and device information.",
+    "sources": [
+      "https://github.com/bogdan-patraeucean/about/blob/main/wintoys/readme.md"
+    ],
+    "selectors": [
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "11413PtruceanBogdan.Wintoys_ankwhmsh70gj6"
+      }
+    ]
+  },
+  {
+    "product": "WSL 2 Linux Kernel Update Package",
+    "description": "A Windows installer package that updates the Linux kernel used by Windows Subsystem for Linux 2.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/windows/wsl/install-manual"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "windows subsystem for linux update",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "X-Mouse Button Control",
+    "description": "A Windows utility for remapping mouse buttons and scroll controls, with profiles for specific applications and windows.",
+    "sources": [
+      "https://www.highrez.co.uk/downloads/XMouseButtonControl.htm"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "x-mouse"
+      },
+      {
+        "kind": "package",
+        "manager": "winget",
+        "id": "Highresolution.X-MouseButtonControl"
+      },
+      {
+        "kind": "local",
+        "name": "x-mouse button control",
+        "publisher": "highresolution enterprises"
+      }
+    ]
+  },
+  {
+    "product": "XBOX Input Service",
+    "description": "A Windows service that manages per-game and per-device settings for input controllers, including gamepads, mice, and keyboards.",
+    "sources": [
+      "https://learn.microsoft.com/en-us/uwp/api/windows.gaming.input?view=winrt-26100"
+    ],
+    "selectors": [
+      {
+        "kind": "local",
+        "name": "xbox service",
+        "publisher": "microsoft corporation"
+      }
+    ]
+  },
+  {
+    "product": "Xodo PDF Reader",
+    "description": "A PDF reader for viewing and annotating documents, filling forms, signing, searching, and printing PDFs.",
+    "sources": [
+      "https://xodo.com/pdf-studio/free-pdf-reader"
+    ],
+    "selectors": [
+      {
+        "kind": "catalog",
+        "id": "xodo"
+      },
+      {
+        "kind": "package",
+        "manager": "store",
+        "id": "5E8FC25E.XODODOCS_3v3sf0k6w2rec"
+      }
+    ]
+  }
+]

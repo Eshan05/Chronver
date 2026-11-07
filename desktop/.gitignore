@@ -1,0 +1,10 @@
+/target/
+/artifacts/
+/catalog-overrides.json
+/tracking.json
+/fixtures/apps.json
+/fixtures/apps-source.md
+/fixtures/inventory.json
+/fixtures/inventory-source.md
+/research/
+/scripts/install-local.ps1
