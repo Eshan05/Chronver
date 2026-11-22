@@ -54,7 +54,11 @@ foreach($line in $i) {
                 if(-not(Test-Path -LiteralPath $location -PathType Container)) { $libraryOnly=$false; break }
                 $uninstallers=@(foreach($command in $key.SelectNodes('*[local-name()="UninstallString" or local-name()="QuietUninstallString"]')) {
                     $m=[regex]::Match($command.InnerText,'^(?:"([^"]+)"|(\S+))')
-                    if($m.Success) { if($m.Groups[1].Success){$m.Groups[1].Value}else{$m.Groups[2].Value} }
+                    if($m.Success) {
+                        $uninstaller=if($m.Groups[1].Success){$m.Groups[1].Value}else{$m.Groups[2].Value}
+                        # Receipt paths can use an 8.3 alias even when directory entries do not.
+                        if($uninstaller -match '^[A-Za-z]:[\\/]'){[IO.Path]::GetFullPath($uninstaller)}else{$uninstaller}
+                    }
                 })
                 $queue=[Collections.Generic.Queue[string]]::new();$queue.Enqueue($location)
                 $files=[Collections.Generic.List[IO.FileInfo]]::new();$count=0;$complete=$true
@@ -67,7 +71,7 @@ foreach($line in $i) {
                 }
                 if(-not $complete) { $libraryOnly=$false; break }
                 $dlls=@($files|Where-Object {$_.Extension -eq '.dll'})
-                $commands=@($files|Where-Object {$_.Extension -in @('.exe','.com','.cmd','.bat','.ps1') -and $_.FullName -notin $uninstallers})
+                $commands=@($files|Where-Object {$_.Extension -in @('.exe','.com','.cmd','.bat','.ps1') -and [IO.Path]::GetFullPath($_.FullName) -notin $uninstallers})
                 if($dlls.Count -eq 0 -or $commands.Count -gt 0) { $libraryOnly=$false; break }
             }
             if($libraryOnly) { $metadata[$id].libraryOnly=$true }

@@ -258,15 +258,10 @@ mod windows_metadata {
         );
         let result: serde_json::Value =
             serde_json::from_str(&powershell(&script, &[("REGISTRY", &registry)])).unwrap();
+        let icon = result["found"]["vendor.tool"]["iconPath"].as_str().unwrap();
         assert_eq!(
-            result["found"]["vendor.tool"]["iconPath"]
-                .as_str()
-                .unwrap()
-                .replace('\\', "/"),
-            app.join("media/logo.png")
-                .to_str()
-                .unwrap()
-                .replace('\\', "/")
+            fs::canonicalize(icon).unwrap(),
+            fs::canonicalize(app.join("media/logo.png")).unwrap()
         );
         assert!(result["old"].as_object().unwrap().is_empty());
         assert_eq!(
@@ -571,7 +566,7 @@ mod windows_metadata {
         let receipt = format!(
             "<registrySnapshot><keys><key><InstallLocation><![CDATA[{}]]></InstallLocation><UninstallString><![CDATA[\"{}\" /quiet]]></UninstallString></key></keys></registrySnapshot>",
             payload.display(),
-            payload.join("remove.exe").display()
+            payload.join("../some library/remove.exe").display()
         );
         write(
             &root.join(".chocolatey/unfamiliar-addon.1.0/.registry"),
