@@ -85,8 +85,12 @@ xychart-beta horizontal
 
 ## ⚙️ Setup
 
-There is no installer. On Windows, build with the MSVC Rust toolchain and C++
-build tools. From the checkout:
+Get the portable Windows x64 ZIP from [Releases](https://github.com/Eshan05/Chronver/releases)
+when available, extract it, and open `Chronver.exe`. See the
+[Windows download guide](docs/portable-windows.md) for details.
+
+To build from source on Windows, use the MSVC Rust toolchain and C++ build tools.
+From the checkout:
 
 ```powershell
 # Open the Windows desktop app

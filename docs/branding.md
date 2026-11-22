@@ -46,3 +46,17 @@ from source does not replace that executable. The workspace ships no installer.
 Saved data still uses the compatibility paths above. The desktop app and engine
 CLI remain separate executables; the Start menu shortcut always targets the
 desktop app, not the JSON CLI.
+
+## Preparing a Windows Release
+
+Run the [Windows release workflow](../.github/workflows/windows-release.yml)
+manually on GitHub to check the workspace and build a portable ZIP without
+creating a release. To prepare a release, tag the reviewed commit as `vX.Y.Z`
+using the desktop version in `desktop/Cargo.toml` and push that tag. The workflow
+checks that the extracted app renders its first window on a fresh hosted
+Windows runner, then creates a **draft** with the ZIP and SHA-256 checksum.
+
+Review the notes and test the extracted app on a clean Windows machine before
+publishing. The download is the desktop app only. It does not include an
+installer or the separate CLI. The workflow links the MSVC runtime statically
+so the portable ZIP does not require the Visual C++ Redistributable.

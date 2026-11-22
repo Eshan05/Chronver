@@ -1,0 +1,145 @@
+name: Windows release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+
+jobs:
+  build:
+    name: Test and package Windows x64
+    runs-on: windows-2025
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Rust
+        run: |
+          rustup toolchain install 1.99.1-x86_64-pc-windows-msvc --profile minimal
+          rustup override set 1.99.1-x86_64-pc-windows-msvc
+
+      - name: Check release version
+        run: |
+          $workspace = cargo metadata --no-deps --locked --format-version 1 | ConvertFrom-Json
+          $version = ($workspace.packages | Where-Object name -eq 'releasescout-rune').version
+          if ($version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') {
+            throw "Expected a stable desktop version; found '$version'"
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -cne "v$version") {
+            throw "Tag '$env:GITHUB_REF_NAME' must match desktop version v$version"
+          }
+          "CHRONVER_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Run workspace tests
+        run: cargo test --locked --workspace -- --test-threads=1
+
+      - name: Build desktop
+        env:
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: -C target-feature=+crt-static
+        run: cargo build --release --locked --target x86_64-pc-windows-msvc -p releasescout-rune --bin chronver-desktop
+
+      - name: Package desktop
+        run: |
+          ./scripts/package-windows.ps1 -Version $env:CHRONVER_VERSION `
+            -Executable target/x86_64-pc-windows-msvc/release/chronver-desktop.exe `
+            -OutputDirectory target/portable-release
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: chronver-windows-x64
+          path: target/portable-release/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke:
+    name: Launch the extracted ZIP on fresh Windows
+    needs: build
+    runs-on: windows-2025
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: chronver-windows-x64
+          path: release-assets
+
+      - name: Verify checksum and first desktop frame
+        shell: pwsh
+        run: |
+          $assets = @(Get-ChildItem -LiteralPath release-assets -Filter 'chronver-*-windows-x64.zip' -File)
+          if ($assets.Count -ne 1) { throw 'Expected exactly one desktop ZIP' }
+          $zip = $assets[0].FullName
+          $expected = (Get-Content -LiteralPath "$zip.sha256" -Raw) -split '\s+'
+          if ($expected[0] -ne (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash) {
+            throw 'Desktop ZIP checksum mismatch'
+          }
+
+          $unpacked = Join-Path $env:RUNNER_TEMP 'chronver-extracted'
+          $ready = Join-Path $env:RUNNER_TEMP 'chronver-ready'
+          $data = Join-Path $env:RUNNER_TEMP 'chronver-profile'
+          Expand-Archive -LiteralPath $zip -DestinationPath $unpacked
+          $null = New-Item -ItemType Directory -Path $ready,$data
+          $start = [Diagnostics.ProcessStartInfo]::new((Join-Path $unpacked 'Chronver.exe'))
+          $start.UseShellExecute = $false
+          $start.WorkingDirectory = $unpacked
+          $start.Environment['LOCALAPPDATA'] = $data
+          $start.Environment['RUNE_READY_DIR'] = $ready
+          $start.Environment['PATH'] = "$env:SystemRoot\System32;$env:SystemRoot"
+          $app = [Diagnostics.Process]::Start($start)
+          try {
+            $marker = Join-Path $ready "Chronver.exe.$($app.Id)"
+            $clock = [Diagnostics.Stopwatch]::StartNew()
+            while (!(Test-Path -LiteralPath $marker)) {
+              if ($app.HasExited) { throw "Chronver exited before its first frame: $($app.ExitCode)" }
+              if ($clock.Elapsed.TotalSeconds -gt 30) { throw 'Chronver did not report a ready frame' }
+              Start-Sleep -Milliseconds 100
+            }
+            $frame = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
+            if ($frame.pid -ne $app.Id) { throw 'Ready marker did not come from the test process' }
+            "Chronver rendered its first desktop frame on a fresh Windows runner."
+          } finally {
+            if (!$app.HasExited) {
+              $null = $app.CloseMainWindow()
+              if (!$app.WaitForExit(5000)) { $app.Kill(); $app.WaitForExit() }
+            }
+            $app.Dispose()
+          }
+
+  draft:
+    name: Create draft GitHub release
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    needs: smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: chronver-windows-x64
+          path: release-assets
+
+      - name: Verify and attach the portable release
+        working-directory: release-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          asset="chronver-${TAG}-windows-x64.zip"
+          sha256sum --check "$asset.sha256"
+          gh release create "$TAG" "$asset" "$asset.sha256" \
+            --draft --verify-tag --title "Chronver $TAG" --generate-notes \
+            --notes "Download the Windows x64 ZIP, extract it into a folder you plan to keep, and run Chronver.exe. This build is unsigned. The source for this build is available at the same release tag."
